@@ -15,6 +15,7 @@ Menu.prototype = {
 		game.load.audio('grunt', 'assets/audio/grunt.mp3');
 		game.load.image('phone', 'assets/img/phone.png');
 		game.load.image('room', 'assets/img/classroom.jpg');
+		game.add.plugin(PhaserInput.Plugin);
 	},
 	create: function() {
 		// print instructions and title to screen
@@ -24,6 +25,7 @@ Menu.prototype = {
 		let style = { font: "bold 20px Futura", fill: "#FFF", boundsAlignH: "center", boundsAlignV: "middle"};
 		this.instructions = game.add.text(game.world.centerX, game.world.centerY, 'Arrow keys to move.\nCollect all the stars and avoid the doggos!\nPress "R" to reverse snow direction.\nPress up to start.', style);
 		this.instructions.setTextBounds(0);
+		game.stage.backgroundColor="#000000";
 	},
 	update: function() {
 		// go to the play state if the up key is pressed down
@@ -78,9 +80,9 @@ Play.prototype = {
 		
 		//make everything in the group invisible except for a small section, which will be the size of the phone
 		var screen = this.game.add.graphics(0,0);
-		screen.beginFill(0xff0000);
+		screen.beginFill(0xffffff, 1);
 		screen.drawRect(0, 0, this.PHONE_WIDTH, this.PHONE_HEIGHT);
-		screen.endFill();
+		screen.endFill(0xffffff, 1);
 		minigame.add(screen);
 		minigame.mask = screen;
 		
@@ -88,8 +90,8 @@ Play.prototype = {
 	},
 
 	update: function() {
-		this.phone.x = game.input.x;
-		this.phone.y = game.input.y;
+		this.phone.x = game.input.x-100;
+		this.phone.y = game.input.y-200;
 		minigame.x = this.phone.x + this.MINIGAME_OFFSET_X;
 		minigame.y = this.phone.y + this.MINIGAME_OFFSET_Y;
 	}
