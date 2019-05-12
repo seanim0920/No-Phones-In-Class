@@ -71,6 +71,8 @@ var Play = function(game) {
 };
 Play.prototype = {
 	create: function() {		
+		
+	
 		//move everything currently in the game world to a group
 		minigame = new Minigame(game);
 		game.world.moveAll(minigame, true);
