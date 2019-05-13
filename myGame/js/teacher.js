@@ -16,6 +16,8 @@ TeacherPreload = function(game) {
 
 //constructor for teacher
 var Teacher = function(game, x, y) {
+	this.WAIT_UNTIL_START = 1;
+
 	this.startDelay = 8;
 	this.endDelay = 15;
 	this.safe_zone = -75;
@@ -38,7 +40,7 @@ var Teacher = function(game, x, y) {
 	this.loadTexture(this.teacherAnim);
 	this.teacherAnim.play(true);
 
-	game.time.events.add(Phaser.Timer.SECOND * (10), this.turn, this, true);
+	game.time.events.add(Phaser.Timer.SECOND * (this.WAIT_UNTIL_START), this.turn, this, true);
 };
 
 //set snow's prototype to that from the phaser sprite object

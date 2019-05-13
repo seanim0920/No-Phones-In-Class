@@ -3,6 +3,7 @@ var Menu = function(game) {};
 Menu.prototype = {
 	preload: function() {
 		// preload images
+		game.load.audio('music', 'assets/audio/spookymusic.wav');
 		game.load.audio('yay', 'assets/audio/yay.mp3');
 		game.load.audio('badend', 'assets/audio/badend.mp3');
 		game.load.audio('grunt', 'assets/audio/grunt.mp3');
@@ -12,6 +13,7 @@ Menu.prototype = {
 		game.load.image('room', 'assets/img/legpanorama.jpg');
 		game.load.video('end', 'assets/video/gameend.webm');
 		TeacherPreload(game);
+		MinigamePreload(game);
 		game.add.plugin(PhaserInput.Plugin);
 	},
 	create: function() {
@@ -41,12 +43,51 @@ End.prototype = {
 		this.finalscore = config.finalscore;
 	},
 	create: function() {
+		music = game.add.audio('music');
+		music.play('', 0, 0.5, true);
 		this.caught = game.add.audio('caught');
 		this.caught.play();
 		death = game.add.video('end');
 		death.play();
 		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
 		death.onComplete.addOnce(function () {
+			music.stop();
+			game.state.start('Menu', true, false, {finalscore: this.score});
+		}, this);
+		// print this score to the screen and play a sound
+		// this.end = game.add.audio('badend');
+		// this.end.play();
+		// let style = { font: "bold 56px Futura", fill: "#FFF", boundsAlignH: "center", boundsAlignV: "middle"};
+		// this.instructions = game.add.text(game.world.centerX, game.world.centerY, 'Game end.\nFinal score: ' + this.finalscore + '\nPress up to restart.', style);
+		// this.instructions.setTextBounds(0);
+	},
+	update: function() {
+		// restart the game when the up key is pressed
+		cursors = game.input.keyboard.createCursorKeys();
+		if (cursors.up.isDown)
+		{
+			game.state.start('Play');
+		}
+	}
+};
+
+// Game Over state
+var Win = function(game) {};
+Win.prototype = {
+	init: function(config) {
+		// take in a score and save it
+		this.finalscore = config.finalscore;
+	},
+	create: function() {
+		music = game.add.audio('music');
+		music.play('', 0, 0.5, true);
+		this.caught = game.add.audio('caught');
+		this.caught.play();
+		death = game.add.video('end');
+		death.play();
+		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
+		death.onComplete.addOnce(function () {
+			music.stop();
 			game.state.start('Menu', true, false, {finalscore: this.score});
 		}, this);
 		// print this score to the screen and play a sound
@@ -84,7 +125,7 @@ var Play = function(game) {
 	this.MINIGAME_OFFSET_Y = 80;
 };
 Play.prototype = {
-	create: function() {		
+	create: function() {
 		var room = new Phaser.Group(game);
 		//this.legs = new Phaser.Group(game);
 
@@ -113,7 +154,7 @@ Play.prototype = {
 		teacher = new Teacher(game, game.world.centerX, game.world.height + 150);
 		room.add(teacher);
 
-		exit = game.input.keyboard.addKey(Phaser.Keyboard.R);
+		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
 	},
 
