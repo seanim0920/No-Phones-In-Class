@@ -3,10 +3,6 @@ var Menu = function(game) {};
 Menu.prototype = {
 	preload: function() {
 		// preload images
-		game.load.image('sky', 'assets/img/sky.png');
-		game.load.image('ground', 'assets/img/platform.png');
-		game.load.spritesheet('maincharacter', 'assets/img/dude.png', 32, 48);
-		game.load.spritesheet('enemy', 'assets/img/baddie.png', 32, 32);
 		game.load.audio('yay', 'assets/audio/yay.mp3');
 		game.load.audio('badend', 'assets/audio/badend.mp3');
 		game.load.audio('grunt', 'assets/audio/grunt.mp3');
@@ -23,15 +19,14 @@ Menu.prototype = {
 		let titlestyle = { font: "bold 56px Futura", fill: "#FFF", boundsAlignH: "center", boundsAlignV: "top"};
 		this.title = game.add.text(game.world.centerX-10, 40, 'No phones in class', titlestyle);
 		this.title.setTextBounds(0);
-		let style = { font: "bold 20px Futura", fill: "#FFF", boundsAlignH: "center", boundsAlignV: "middle"};
-		this.instructions = game.add.text(game.world.centerX, game.world.centerY, 'Move left and right to avoid the teacher' + "'" + 's stare.\nPush up to continue', style);
+		let style = { font: "bold 32px Futura", fill: "#FFF", boundsAlignH: "center", boundsAlignV: "middle"};
+		this.instructions = game.add.text(game.world.centerX, game.world.centerY, "The teacher will peek left and right.\nMove your mouse in the opposite direction to avoid getting caught.\nDon't let them see your phone!\n\nCLICK HERE to continue", style);
 		this.instructions.setTextBounds(0);
 		game.stage.backgroundColor="#150000";
 	},
 	update: function() {
 		// go to the play state if the up key is pressed down
-		cursors = game.input.keyboard.createCursorKeys();
-		if (cursors.up.isDown)
+		if (game.input.activePointer.leftButton.isDown)
 		{
 			game.state.start('Play');
 		}
@@ -111,18 +106,22 @@ Play.prototype = {
 		//room.create(0, 0, 'legs');
 		bg = room.create(50, 50, 'legs');
 		bg.scale.setTo(3);
+
+		phone = game.add.sprite(0, 0, 'phone');
+		this.phoneSnap = 0;
+
 		teacher = new Teacher(game, game.world.centerX, game.world.height + 150);
 		room.add(teacher);
-		
-		this.phone = game.add.sprite(0, 0, 'phone');
-		this.phoneSnap = 0;
+
+		exit = game.input.keyboard.addKey(Phaser.Keyboard.R);
+		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
 	},
 
 	update: function() {
-		this.phone.x = game.input.x - this.CURSOR_OFFSET_X;
-		this.phone.y = game.input.y - this.CURSOR_OFFSET_Y;
-		minigame.x = this.phone.x + this.MINIGAME_OFFSET_X;
-		minigame.y = this.phone.y + this.MINIGAME_OFFSET_Y;
+		phone.x = game.input.x - this.CURSOR_OFFSET_X;
+		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
+		minigame.x = phone.x + this.MINIGAME_OFFSET_X;
+		minigame.y = phone.y + this.MINIGAME_OFFSET_Y;
 	}
 };
 
