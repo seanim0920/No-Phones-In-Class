@@ -8,17 +8,14 @@ Menu.prototype = {
 		game.load.spritesheet('maincharacter', 'assets/img/dude.png', 32, 48);
 		game.load.spritesheet('enemy', 'assets/img/baddie.png', 32, 32);
 		game.load.audio('yay', 'assets/audio/yay.mp3');
-		game.load.audio('music', 'assets/audio/gibberish.mp3');
 		game.load.audio('badend', 'assets/audio/badend.mp3');
 		game.load.audio('grunt', 'assets/audio/grunt.mp3');
-		game.load.audio('caught', 'assets/audio/caught2.mp3');
+		game.load.audio('caught', 'assets/audio/caught.mp3');
 		game.load.image('phone', 'assets/img/phone.png');
 		game.load.image('legs', 'assets/img/classroom.jpg');
 		game.load.image('room', 'assets/img/legpanorama.jpg');
 		game.load.video('end', 'assets/video/gameend.webm');
-		game.load.video('turnleft', 'assets/video/turnleft.webm');
-		game.load.video('turnright', 'assets/video/turnright.webm');
-		game.load.video('draw', 'assets/video/drawing.webm');
+		TeacherPreload(game);
 		game.add.plugin(PhaserInput.Plugin);
 	},
 	create: function() {
@@ -53,7 +50,7 @@ End.prototype = {
 		this.caught.play();
 		death = game.add.video('end');
 		death.play();
-		death.addToWorld(game.world.centerX,0,0.5,0,1,1.2);
+		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
 		death.onComplete.addOnce(function () {
 			game.state.start('Menu', true, false, {finalscore: this.score});
 		}, this);
@@ -88,12 +85,9 @@ var Play = function(game) {
 	this.MINIGAME_OFFSET_Y = 80;
 	this.CURSOR_OFFSET_X = 250;
 	this.CURSOR_OFFSET_Y = 250;
-	this.danger_zone = 200;
 };
 Play.prototype = {
 	create: function() {		
-		this.music = game.add.audio('music');
-		this.music.play('', 0, 1, true);		
 		var room = new Phaser.Group(game);
 		//this.legs = new Phaser.Group(game);
 
@@ -115,83 +109,11 @@ Play.prototype = {
 		//room.create(0, 0, 'legs');
 		bg = room.create(50, 50, 'legs');
 		bg.scale.setTo(3);
-		teacher = room.create(game.world.centerX, game.world.height + 150);
-		teacher.anchor.setTo(0.5,1);
-		teacher.scale.setTo(1.2);
-		teacher.caught = false;
+		teacher = new Teacher(game, game.world.centerX, game.world.height + 150);
+		room.add(teacher);
 		
 		this.phone = game.add.sprite(0, 0, 'phone');
 		this.phoneSnap = 0;
-
-		this.returnToNeutral();
-	},
-
-	turnright: function() {
-		this.music.pause();
-		var turn = game.add.video('turnright');
-		teacher.loadTexture(turn);
-		turn.play();
-		game.time.events.add(Phaser.Timer.SECOND * (0.65), 
-			function () {
-				var check = game.time.events.loop(0, this.checkright, this);
-				game.time.events.add(Phaser.Timer.SECOND * (0.9), function() {game.time.events.remove(check)}, this);
-			},
-		this);
-		turn.onComplete.addOnce(function () {
-			if (teacher.caught) {
-				game.state.start('End', true, false, {finalscore: this.score});
-			} else {
-				this.returnToNeutral();
-			}
-		}, this);
-	},
-
-	checkright: function() {
-		if (!teacher.caught && game.input.x > game.world.centerX + this.danger_zone) {
-			teacher.caught = true;
-		}
-	},
-	
-	turnleft: function() {
-		this.music.pause();
-		var turn = game.add.video('turnleft');
-		teacher.loadTexture(turn);
-		turn.play();
-		game.time.events.add(Phaser.Timer.SECOND * (0.45), 
-			function () {
-				var check = game.time.events.loop(0, this.checkleft, this);
-				game.time.events.add(Phaser.Timer.SECOND * (1.05), function() {game.time.events.remove(check)}, this);
-			},
-		this);
-		turn.onComplete.addOnce(function () {
-			if (teacher.caught) {
-				game.state.start('End', true, false, {finalscore: this.score});
-			} else {
-				this.returnToNeutral();
-			}
-		}, this);
-	},
-	
-	checkleft: function() {
-		if (!teacher.caught && game.input.x < game.world.centerX - this.danger_zone) {
-			teacher.caught = true;
-		}
-	},
-
-	returnToNeutral: function() {
-		this.music.resume();
-		var teacherAnim = game.add.video('draw');
-		teacher.loadTexture(teacherAnim);
-		teacherAnim.play(true);
-		var delay = game.rnd.realInRange(1, 8);
-		var right = 0;
-		var left = 1;
-		var turn = game.rnd.integerInRange(right, left);
-		if (turn == right) {
-			game.time.events.add(Phaser.Timer.SECOND * (delay), this.turnright, this);
-		} else {
-			game.time.events.add(Phaser.Timer.SECOND * (delay), this.turnleft, this);
-		}
 	},
 
 	update: function() {
