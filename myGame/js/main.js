@@ -81,10 +81,12 @@ End.prototype = {
 var Play = function(game) {
 	this.PHONE_WIDTH = 350;
 	this.PHONE_HEIGHT = 700;
+	this.CURSOR_OFFSET_X = 250;
+	this.CURSOR_OFFSET_Y = 270;
+
+	//DONT TOUCH
 	this.MINIGAME_OFFSET_X = 90;
 	this.MINIGAME_OFFSET_Y = 80;
-	this.CURSOR_OFFSET_X = 250;
-	this.CURSOR_OFFSET_Y = 250;
 };
 Play.prototype = {
 	create: function() {		
