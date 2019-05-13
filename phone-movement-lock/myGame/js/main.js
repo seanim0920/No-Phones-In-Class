@@ -76,6 +76,7 @@ var Play = function(game) {
 };
 Play.prototype = {
 	create: function() {		
+		this.speed = 4;
 		var room = new Phaser.Group(game);
 		this.legs = new Phaser.Group(game);
 
@@ -121,17 +122,17 @@ Play.prototype = {
 		//scroll up
 		if (game.input.y < 200 && this.legs.y <= -50) {
 			//go down
-			this.legs.y += 50;
-			this.leftBound -= 22; //expand bounds
-			this.rightBound += 22;
+			this.legs.y += 22 * this.speed;
+			this.leftBound -= 22 * this.speed; //expand bounds
+			this.rightBound += 22 * this.speed;
 
 		}
 		//scroll down
 		else if (game.input.y > 600 && this.legs.y - 800 >= -this.legs.height/1.2) {
 			//go up
-			this.legs.y -= 50;
-			this.leftBound += 22; //shrink bounds
-			this.rightBound -= 22;
+			this.legs.y -= 50 * this.speed;
+			this.leftBound += 22 * this.speed; //shrink bounds
+			this.rightBound -= 22 * this.speed;
 		}
 		if (this.leftBound > this.rightBound) //bounds are overlapping
 		{
