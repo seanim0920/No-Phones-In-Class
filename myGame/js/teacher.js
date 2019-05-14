@@ -16,7 +16,7 @@ TeacherPreload = function(game) {
 
 //constructor for teacher
 var Teacher = function(game, x, y) {
-	this.WAIT_UNTIL_START = 1;
+	this.WAIT_UNTIL_START = 10;
 
 	this.startDelay = 8;
 	this.endDelay = 15;

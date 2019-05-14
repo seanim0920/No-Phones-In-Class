@@ -36,6 +36,11 @@ var Minigame = function(game) {
 	//  Load the Google WebFont Loader script
     game.load.script('font.poppins', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
 
+    let titlestyle = { font: "bold 32px Futura", fill: "#000", boundsAlignH: "center", boundsAlignV: "top"};
+    this.score = game.add.text(175, 300, 'Score: 0', titlestyle);
+    this.score.setTextBounds(0);
+    this.value = 0;
+
  	var style = {
       font: '15px Poppins',
       fill: '#000',
@@ -103,7 +108,8 @@ var Minigame = function(game) {
     "elon musk nude",
     "how to hold breath long time",
     "when is next election",
-    "wow, i am an idiot",
+    "what is my iq",
+    "qwertyuioplkjhgfdsazxcvbnm"
     ];
 
     this.nextWord = 0;
@@ -141,9 +147,8 @@ Minigame.prototype = Object.create(Phaser.Group.prototype);
 Minigame.prototype.constructor = Minigame;
 //override the update method
 Minigame.prototype.update = function() {
-
-	this.checkText();
-
+    this.checkText();
+    this.input.update();
 }
 
 Minigame.prototype.checkText = function() {
@@ -157,7 +162,7 @@ Minigame.prototype.checkText = function() {
 			if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
 				//go to next letter
 				this.input.setText(this.input.value + " ");
-				this.lettersTyped++;
+                this.lettersTyped++;
 			}
 			this.input.startFocus();
 		}
@@ -171,7 +176,9 @@ Minigame.prototype.checkText = function() {
 	//check if sentence correctly typed and enter key is pressed
 	var temp = this.input.value;
 	if(temp == this.theWord[this.nextWord] /*&& game.input.keyboard.isDown(Phaser.Keyboard.ENTER)*/){
-		this.correct.play();
+        this.correct.play();
+        this.value++;
+        this.score.setText("Score: " + this.value);
 		temp = "";
 		this.nextWord ++;
 		this.input.setText("");
