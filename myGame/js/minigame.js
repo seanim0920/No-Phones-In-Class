@@ -1,109 +1,145 @@
+MinigamePreload = function(game) {
+	// preload images
+    game.load.audio('tock', 'assets/audio/tock.wav');
+    game.load.audio('correct', 'assets/audio/shake.wav');
+}
+
 //constructor for minigame
 var Minigame = function(game) {
 	//refer to the constructor for the group object in Phaser
 	Phaser.Group.call(this, game);
-	
-	//make any game you want here
-	
-	//have a variable for the score
-	this.score = 0;
-	// Enable the Arcade Physics system
-	game.physics.startSystem(Phaser.Physics.ARCADE);
-	
-	// add audio
-	this.wow = game.add.audio('grunt');
-	this.music = game.add.audio('music');
-	this.pop = game.add.audio('yay');
-	//play music and let it loop
-	this.music.play('', 0, 1, true);
+	this.tock = game.add.audio('tock');
+	this.correct = game.add.audio('correct');
 
-	// Adds "sky" sprite as the background
-	game.add.sprite(0, 0, 'sky');
+	// creates object for cursor input
+	cursors = game.input.keyboard.createCursorKeys();
+	// run game loop
 
-	// Create a platforms group for collision
-	platforms = game.add.group();
-	platforms.enableBody = true; // Enable physics for this group
+	var graphTemp = this.game.add.graphics(0,0);
+	graphTemp.beginFill(0xffffff);
+	var tempRect = graphTemp.drawRect(-100, -100, 1000,1000);
+	graphTemp.endFill();
 
-	// Create the ground
-	var ground = platforms.create(0, 500, 'ground');
-	// Scale it to fit the width of the game
-	ground.scale.setTo(2, 7);
-
-	// This stops the ground from falling away when you jump on it
-	ground.body.immovable = true;
-
-	// Create five ledges
-	var ledge = platforms.create(350, 450, 'ground');
-	ledge.scale.setTo(0.01, 1);
-	ledge.body.immovable = true;
-
-	ledge = platforms.create(32, 200, 'ground');
-	ledge.scale.setTo(0.65, 0.7);
-	ledge.body.immovable = true;
-	
-	ledge = platforms.create(-210, 50, 'ground');
-	ledge.scale.setTo(1, 0.1);
-	ledge.body.immovable = true;
-	
-	ledge = platforms.create(260, 350, 'ground');
-	ledge.scale.setTo(1, 0.1);
-	ledge.body.immovable = true;
-
-	ledge = platforms.create(505, 580, 'ground');
-	ledge.scale.setTo(0.25, 2);
-	ledge.body.immovable = true;
-	
-	// Create the player and their starting position
-	player = game.add.sprite(32, game.world.height - 500, 'maincharacter');
-
-	// Enable physics on the player
-	game.physics.arcade.enable(player);
-
-	// Player physics properties
-	player.body.gravity.y = 300; //fall speed
-
-	//  Our two animations, walking left and right.
-	player.animations.add('left', [0, 1, 2, 3], 12, true);
-	player.animations.add('right', [5, 6, 7, 8], 12, true);
-	
-	// Create group of collectibles
-	stars = game.add.group();
-	stars.enableBody = true; //enable physics for this group
-	
-	// Create group of enemies
-	baddies = game.add.group();
-	baddies.enableBody = true; //enable physics for this group
-	
-	// Create two enemies
-	var baddie = baddies.create(70, 100, 'enemy'); //define starting position and sprite
-	baddie.body.gravity.y = 200; //fall speed
-	baddie.animations.add('left', [0, 1, 1], 12, true); //add default animation
-	baddie.animations.play('left'); //play default animation
-	// Create another enemy
-	baddie = baddies.create(570, 500, 'enemy'); //define starting position and sprite
-	baddie.body.gravity.y = 200; //fall speed
-	baddie.animations.add('right', [3, 2, 2], 12, true); //add default animation
-	baddie.animations.play('right'); //play default animation
-
-	//  Here we'll create 9 stars evenly spaced apart
-	for (var i = 0; i < 9; i++)
-	{
-		//  Create a star inside of the 'stars' group
-		var star = stars.create(i * 70, 0, 'star');
-
-		//  Let gravity do its thing
-		star.body.gravity.y = 600;
-
-		//  This just gives each star a slightly random bounce value
-		star.body.bounce.y = 0.7 + Math.random() * 0.2;
-	}
-	
-	// Create diamond sprite
-	diamond = game.add.sprite(Math.random() * 500, Math.random() * 500, 'diamond'); //at a random position
-	game.physics.arcade.enable(diamond); //enable physics for this object
-	
 	// Create text at the corner to print the score
-	scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+	//scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+	var graphics = game.add.graphics(10, 10);
+	graphics.beginFill(0xdddddd);
+	var rect1 = graphics.drawRoundedRect(27, 18, 280, 90, 20);
+	rect1.alpha = 0.5;
+	graphics.endFill();
+
+	var WebFontConfig = {
+		google: {
+			families: ['Poppins']
+		}
+	};
+	//  Load the Google WebFont Loader script
+    game.load.script('font.poppins', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
+
+    let titlestyle = { font: "bold 32px Futura", fill: "#000", boundsAlignH: "center", boundsAlignV: "top"};
+    this.score = game.add.text(175, 300, 'Score: 0', titlestyle);
+    this.score.setTextBounds(0);
+    this.value = 0;
+
+ 	var style = {
+      font: '15px Poppins',
+      fill: '#000',
+      align: 'left'
+    };
+
+    var randText = Math.random();
+    text1 = game.add.text(rect1.x+110,rect1.y+40, "New Message - Mom", style);
+    text1.anchor.setTo(0.5);
+    text1.fontWeight = 'bold';
+    if(randText > 2/3){
+    text2 = game.add.text(rect1.x+160,rect1.y+80, "Where are you? Your sister's jazz flute\nrecital started 2 hours ago.",	style);
+    text2.anchor.setTo(0.5);
+	}
+	else if (randText>1/3){
+    text2 = game.add.text(rect1.x+150,rect1.y+80, "You never leave home without your\nYugioh deck, what's going on?",	style);
+    text2.anchor.setTo(0.5);
+	}
+	else{
+    text2 = game.add.text(rect1.x+165,rect1.y+80, "Honey, there's a stranger in your room.\nAnd he's singing 'Sweet Home Alabama'", style);
+    text2.anchor.setTo(0.5);
+	}
+    
+    this.theWord = [
+    "how to kill time in class",
+    "why my arm shake when i eat dirt",
+    "how to enroll online university",
+    "are there people who look like me",
+    "pictures jason shwartzman",
+    "movies out now",
+    "endgame rotten tomatoes",
+    "watch endgame free",
+    "thanos",
+    "thanos chin",
+    "thanos nude",
+    "clear history google",
+    "does your voice change as u age",
+    "painful throbbing in brain",
+    "head hurts why",
+    "brain tumor symptoms",
+    "average age brain tumor",
+    "survival rate brain tumor",
+    "cost brain tumor surgery",
+    "early onset alzheimers",
+    "is healthy to eat eggs everyday",
+    "difference between who and whom",
+    "buy smart pills online",
+    "why isnt pluto a planet",
+    "make money without working",
+    "how to raise credit score",
+    "does your vote really matter",
+    "whats the state soil of california",
+    "rick and morty watch free",
+    "why does god allow suffering",
+    "best free mobile games 2019",
+    "funny animals pics",
+    "dogs with eyebrows",
+    "birds with arms",
+    "fairly odd parents fairy guy name",
+    "cosmo nude",
+    "why isnt 11 pronounced onety one",
+    "elon musk net worth",
+    "tesla 3 price",
+    "tesla 3 used cheap",
+    "elon musk nude",
+    "how to hold breath long time",
+    "when is next election",
+    "what is my iq",
+    "qwertyuioplkjhgfdsazxcvbnm"
+    ];
+
+    this.nextWord = 0;
+    this.lettersTyped = 0;
+
+    this.fakeInput = game.add.inputField(27, 180, {
+    font: '18px Helvetica',
+    fill: 'rgba(0, 0, 0, 0.65)',
+    width: 280,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#666666',
+    borderRadius: 15,
+});
+    this.fakeInput.setText(this.theWord[0]);
+
+ this.input = game.add.inputField(27, 180, {
+    font: '18px Helvetica',
+    fill: '#000000',
+    fillAlpha: 0,
+    width: 280,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 6,
+    forceCase: PhaserInput.ForceCase.lower,
+    focusOutOnEnter: false
+});
+this.input.startFocus();
+
 };
 //set snow's prototype to that from the phaser sprite object
 Minigame.prototype = Object.create(Phaser.Group.prototype);
@@ -111,96 +147,43 @@ Minigame.prototype = Object.create(Phaser.Group.prototype);
 Minigame.prototype.constructor = Minigame;
 //override the update method
 Minigame.prototype.update = function() {
-	// creates object for cursor input
-	cursors = game.input.keyboard.createCursorKeys();
-	// run game loop
-	
-	// Collide the player and the stars with the platforms
-	var hitPlatform = game.physics.arcade.collide(player, platforms);
-	game.physics.arcade.collide(stars, platforms);
-	game.physics.arcade.collide(baddies, platforms);
-	game.physics.arcade.overlap(player, stars, Minigame.collectStar, null, this);
-	game.physics.arcade.overlap(player, baddies, Minigame.hitBaddie, null, this);
-	game.physics.arcade.overlap(player, diamond, Minigame.collectDiamond, null, this);
-	
-	//  Reset the players velocity (movement)
-	player.body.velocity.x = 0;
-	
-	if (cursors.left.isDown)
-	{
-		//  Move to the left
-		player.body.velocity.x = -200;
+    this.checkText();
+    this.input.update();
+}
 
-		if (hitPlatform)
-			//  play the walking animation if player is moving on the ground
-			player.animations.play('left');
-		else
-			//  freeze the player's animation when mid-air
-			player.frame = 1;
+Minigame.prototype.checkText = function() {
+
+	//check if user typed a new letter
+	if(this.lettersTyped < this.input.value.length){
+		//chech if last char typed is incorrect
+		if(this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
+			console.log("wrong");
+			this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
+			if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
+				//go to next letter
+				this.input.setText(this.input.value + " ");
+                this.lettersTyped++;
+			}
+			this.input.startFocus();
+		}
+
+		else{ //correct input
+				console.log("correct");
+				this.tock.play();
+				this.lettersTyped ++;
+			} 
+		}
+	//check if sentence correctly typed and enter key is pressed
+	var temp = this.input.value;
+	if(temp == this.theWord[this.nextWord] /*&& game.input.keyboard.isDown(Phaser.Keyboard.ENTER)*/){
+        this.correct.play();
+        this.value++;
+        this.score.setText("Score: " + this.value);
+		temp = "";
+		this.nextWord ++;
+		this.input.setText("");
+		this.fakeInput.setText(this.theWord[this.nextWord]);
+		this.lettersTyped = 0;
+		this.input.startFocus();
 	}
-	else if (cursors.right.isDown)
-	{
-		//  Move to the right
-		player.body.velocity.x = 200;
-
-		if (hitPlatform)
-			//  play the walking animation if player is moving on the ground
-			player.animations.play('right');
-		else
-			//  freeze the player's animation when mid-air
-			player.frame = 8;
-	}
-	else
-	{
-		//  If the player isn't holding any buttons down, make them face the camera
-		player.animations.stop();
-		player.frame = 4;
-	}
-
-	//  Allow the player to jump if they are touching the ground.
-	if (cursors.up.isDown && player.body.touching.down && hitPlatform)
-	{
-		player.body.velocity.y = -350;
-	}
-};
-
-Minigame.collectStar = function(player, star) {
-	// Removes the star from the screen
-	star.kill();
-	// plays a sound
-	this.pop.play();
-
-	//  Add and update the score
-	this.score += 10;
-	scoreText.text = 'Score: ' + this.score;
-	console.log('total stars is: ' + stars.total)
-	// check if this was the last star in the game
-	if (stars.total <= 0)
-	{
-		//stop the music and go to the end screen
-		this.music.stop();
-		//pass the score to the end screen
-		game.state.start('End', true, false, {finalscore: this.score});
-	}
-};
-
-Minigame.collectDiamond = function(player, diamond) {
-	// Removes the star from the screen
-	diamond.kill();
-	//plays a sound
-	this.wow.play();
-	//  Add and update the score
-	this.score += 50;
-	scoreText.text = 'Score: ' + this.score;
-};
-
-Minigame.hitBaddie = function(player, baddie) {
-	// Removes the baddie from the screen and stops the music
-	this.music.stop();
-	baddie.kill();
-
-	//  Add and update the score
-	this.score -= 25;
-	// go to the end screen and pass the final score
-	game.state.start('End', true, false, {finalscore: this.score});
-};
+}
