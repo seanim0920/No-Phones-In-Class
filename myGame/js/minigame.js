@@ -169,8 +169,19 @@ Minigame.prototype.update = function() {
 Minigame.prototype.checkText = function() {
 
 	//check if user typed a new letter
-	if(this.lettersTyped != this.input.value.length){       
-		//chech if last char typed is incorrect
+	if(this.lettersTyped != this.input.value.length){
+		//check if last char typed is incorrect
+		if(this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
+			console.log("wrong");
+			this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
+			if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
+				//go to next letter
+				this.input.setText(this.input.value + " ");
+				this.lettersTyped++;
+			}
+			this.input.startFocus();
+		}
+		//check if last char typed is incorrect
 		// if(this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
 		// 	console.log("wrong");
 		// 	this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
