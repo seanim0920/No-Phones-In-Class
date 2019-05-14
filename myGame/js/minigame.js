@@ -2,6 +2,7 @@ MinigamePreload = function(game) {
 	// preload images
     game.load.audio('tock', 'assets/audio/tock.wav');
     game.load.audio('correct', 'assets/audio/shake.wav');
+    game.load.audio('wrong', 'assets/audio/vibrate.mp3');
 }
 
 //constructor for minigame
@@ -10,10 +11,13 @@ var Minigame = function(game) {
 	Phaser.Group.call(this, game);
 	this.tock = game.add.audio('tock');
 	this.correct = game.add.audio('correct');
+	this.wrong = game.add.audio('wrong');
 
 	// creates object for cursor input
 	cursors = game.input.keyboard.createCursorKeys();
-	// run game loop
+    // run game loop
+    
+    this.callback = function() {};
 
 	var graphTemp = this.game.add.graphics(0,0);
 	graphTemp.beginFill(0xffffff);
@@ -65,81 +69,92 @@ var Minigame = function(game) {
 	}
     
     this.theWord = [
-    "how to kill time in class",
-    "why my arm shake when i eat dirt",
-    "how to enroll online university",
-    "are there people who look like me",
-    "pictures jason shwartzman",
-    "movies out now",
-    "endgame rotten tomatoes",
-    "watch endgame free",
-    "thanos",
-    "thanos chin",
-    "thanos nude",
-    "clear history google",
-    "does your voice change as u age",
-    "painful throbbing in brain",
-    "head hurts why",
-    "brain tumor symptoms",
-    "average age brain tumor",
-    "survival rate brain tumor",
-    "cost brain tumor surgery",
-    "early onset alzheimers",
-    "is healthy to eat eggs everyday",
-    "difference between who and whom",
-    "buy smart pills online",
-    "why isnt pluto a planet",
-    "make money without working",
-    "how to raise credit score",
-    "does your vote really matter",
-    "whats the state soil of california",
-    "rick and morty watch free",
-    "why does god allow suffering",
-    "best free mobile games 2019",
-    "funny animals pics",
-    "dogs with eyebrows",
-    "birds with arms",
-    "fairly odd parents fairy guy name",
-    "cosmo nude",
-    "why isnt 11 pronounced onety one",
-    "elon musk net worth",
-    "tesla 3 price",
-    "tesla 3 used cheap",
-    "elon musk nude",
-    "how to hold breath long time",
-    "when is next election",
-    "what is my iq",
-    "qwertyuioplkjhgfdsazxcvbnm"
-    ];
+        "no phones in class",
+        "how to kill time in class",
+        "why my arm shake when i eat dirt",
+        "how to enroll online university",
+        "are there people who look like me",
+        "pictures jason shwartzman",
+        "movies out now",
+        "endgame rotten tomatoes",
+        "watch endgame free",
+        "thanos",
+        "thanos chin",
+        "thanos nude",
+        "clear history google",
+        "does your voice change as u age",
+        "painful throbbing in brain",
+        "head hurts why",
+        "brain tumor symptoms",
+        "average age brain tumor",
+        "survival rate brain tumor",
+        "cost brain tumor surgery",
+        "early onset alzheimers",
+        "is hellthy to eat eggs evewyday",
+        "difference between who and whom",
+        "buy smart pills online",
+        "why isnt pluto a planet",
+        "make money without working",
+        "how to raise credit score",
+        "early onset alzhiemers",
+        "does your vote really matter",
+        "whats the state sol of california",
+        "rick and morty watch free",
+        "why does god allow suffring",
+        "best free moblle games 2019",
+        "funny animals pics",
+        "dogs with eyebrows",
+        "birds with arms",
+        "early onset alzeihmers",
+        "fairly odd parents fairy guy name",
+        "cosmo nude",
+        "why isnt 11 pronounced onety one",
+        "elon musk net worth",
+        "tesla 3 price",
+        "tesla 3 used cheap",
+        "early onset alsheimirz",
+        "elon musk nude",
+        "how to hold breath lung time",
+        "when is next election",
+        "what is my iq",
+        "qwertyuioplkjhgfdsazxcvbnm"
+        ];
 
-    this.nextWord = 0;
-    this.lettersTyped = 0;
+        this.nextWord = 0;
+        this.lettersTyped = 0;
 
-    this.fakeInput = game.add.inputField(27, 180, {
-    font: '18px Helvetica',
-    fill: 'rgba(0, 0, 0, 0.65)',
-    width: 280,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#666666',
-    borderRadius: 15,
-});
+        this.fakeInput = game.add.inputField(27, 180, {
+            font: '18px Helvetica',
+            fill: 'rgba(0, 0, 0, 0.65)',
+            width: 280,
+            padding: 8,
+            borderWidth: 1,
+            borderColor: '#666666',
+            borderRadius: 15,
+        }
+    );
     this.fakeInput.setText(this.theWord[0]);
 
- this.input = game.add.inputField(27, 180, {
-    font: '18px Helvetica',
-    fill: '#000000',
-    fillAlpha: 0,
-    width: 280,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#000',
-    borderRadius: 6,
-    forceCase: PhaserInput.ForceCase.lower,
-    focusOutOnEnter: false
-});
-this.input.startFocus();
+    this.input = game.add.inputField(27, 180, {
+        font: '18px Helvetica',
+        fill: '#000000',
+        fillAlpha: 0,
+        width: 280,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: '#000',
+        borderRadius: 6,
+        forceCase: PhaserInput.ForceCase.lower,
+        focusOutOnEnter: false,
+        blockInput: false,
+    }
+    );
+    this.input.focusOutOnEnter = false;
+    this.input.blockInput = false;
+    this.input.startFocus();
 
+    enterKey = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
+	enterKey.onDown.add(this.checkIfInputIsCorrect, this, 0, true);
 };
 //set snow's prototype to that from the phaser sprite object
 Minigame.prototype = Object.create(Phaser.Group.prototype);
@@ -154,28 +169,33 @@ Minigame.prototype.update = function() {
 Minigame.prototype.checkText = function() {
 
 	//check if user typed a new letter
-	if(this.lettersTyped < this.input.value.length){
+	if(this.lettersTyped != this.input.value.length){       
 		//chech if last char typed is incorrect
-		if(this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
-			console.log("wrong");
-			this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
-			if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
-				//go to next letter
-				this.input.setText(this.input.value + " ");
-                this.lettersTyped++;
-			}
-			this.input.startFocus();
-		}
+		// if(this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
+		// 	console.log("wrong");
+		// 	this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
+		// 	if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
+		// 		//go to next letter
+		// 		this.input.setText(this.input.value + " ");
+        //         this.lettersTyped++;
+		// 	}
+		// 	this.input.startFocus();
+		// }
 
-		else{ //correct input
-				console.log("correct");
-				this.tock.play();
-				this.lettersTyped ++;
-			} 
-		}
-	//check if sentence correctly typed and enter key is pressed
+		// else{ //correct input
+		// 		console.log("correct");
+		// 		this.tock.play();
+        //         this.lettersTyped ;
+		// 	} 
+		// } 
+        this.lettersTyped = this.input.value.length;
+        this.tock.play();
+    }
+}
+
+Minigame.prototype.checkIfInputIsCorrect = function() {
 	var temp = this.input.value;
-	if(temp == this.theWord[this.nextWord] /*&& game.input.keyboard.isDown(Phaser.Keyboard.ENTER)*/){
+	if(temp == this.theWord[this.nextWord]){
         this.correct.play();
         this.value++;
         this.score.setText("Score: " + this.value);
@@ -183,7 +203,26 @@ Minigame.prototype.checkText = function() {
 		this.nextWord ++;
 		this.input.setText("");
 		this.fakeInput.setText(this.theWord[this.nextWord]);
-		this.lettersTyped = 0;
-		this.input.startFocus();
-	}
+        this.callback();
+	} else {        
+        this.wrong.play();
+		this.input.setText("");
+        this.fakeInput.setText(this.theWord[this.nextWord]);
+        // let grayColor = this.fakeInput.fill;
+        // this.fakeInput.fill = '#999999';
+        // // let colorBlend = { step: 0 };
+        // // let colorTween = this.game.add.tween(colorBlend).to({ step: 100 }, 1000);
+        // // colorTween.onUpdateCallback(() => {
+        // //     this.fakeInput.fill = Phaser.Color.interpolateColor(0x990000, grayColor, 100, colorBlend.step);
+        // // });        
+        // // //this.fakeInput.fill = grayColor;
+        // // colorTween.start();
+        //this.input.startFocus();
+    }
+    this.lettersTyped = 0;
+    this.input.startFocus();
+}
+
+Minigame.prototype.setCorrectTextInputCallback = function(callback) {
+    this.callback = callback;
 }

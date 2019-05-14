@@ -37,6 +37,7 @@ var Teacher = function(game, x, y) {
 	this.scale.setTo(1.2);
 	this.caught = false;
 	this.warned = false;
+	this.caughtCallback = function(){};
 	this.loadTexture(this.teacherAnim);
 	this.teacherAnim.play(true);
 
@@ -173,15 +174,18 @@ Teacher.prototype.peek = function(peekRight) {
 Teacher.prototype.checkIfYouLost = function() {
 	console.log('did you lose?');
 	if (this.caught) {
+		this.caughtCallback();
 		console.log('yeah');
-		game.state.start('End', true, false, {finalscore: this.score});
-	} else {
-		console.log('nah');
-		this.neutralStance();
 	}
+	this.neutralStance();
+};
+
+Teacher.prototype.setCallbackWhenCaught = function(callback) {
+	this.caughtCallback = callback;
 };
 
 Teacher.prototype.neutralStance = function() {
+	this.caught = false;
 	if (this.startDelay > 3) {
 		this.startDelay -= Math.random()/3;
 	}
@@ -201,8 +205,8 @@ Teacher.prototype.neutralStance = function() {
 	var move = game.rnd.integerInRange(0, 4);
 	if (move < 4) {
 		var direction = game.rnd.integerInRange(right, left);
-		var both = game.rnd.integerInRange(0, 3);
-		if (this.warned && both == 0) {
+		var both = game.rnd.integerInRange(0, 5);
+		if (this.warned && both == 5) {
 			game.time.events.add(Phaser.Timer.SECOND * (delay), this.turnBoth, this, direction == right);
 		} else {
 			game.time.events.add(Phaser.Timer.SECOND * (delay), this.turn, this, direction == right);
