@@ -6,7 +6,7 @@ MinigamePreload = function(game) {
 }
 
 //constructor for minigame
-var Minigame = function(game) {
+var Minigame = function(game, optionalTheWord) {
 	//refer to the constructor for the group object in Phaser
 	Phaser.Group.call(this, game);
 	this.tock = game.add.audio('tock');
@@ -18,6 +18,7 @@ var Minigame = function(game) {
     // run game loop
     
     this.callback = function() {};
+    this.wrongCallback = function() {};
 
 	var graphTemp = this.game.add.graphics(0,0);
 	graphTemp.beginFill(0xffffff);
@@ -68,57 +69,61 @@ var Minigame = function(game) {
     text2.anchor.setTo(0.5);
 	}
     
-    this.theWord = [
-        "no phones in class",
-        "how to kill time in class",
-        "why my arm shake when i eat dirt",
-        "how to enroll online university",
-        "are there people who look like me",
-        "pictures jason shwartzman",
-        "movies out now",
-        "endgame rotten tomatoes",
-        "watch endgame free",
-        "thanos",
-        "thanos chin",
-        "thanos nude",
-        "clear history google",
-        "does your voice change as u age",
-        "painful throbbing in brain",
-        "head hurts why",
-        "brain tumor symptoms",
-        "average age brain tumor",
-        "survival rate brain tumor",
-        "cost brain tumor surgery",
-        "early onset alzheimers",
-        "is hellthy to eat eggs evewyday",
-        "difference between who and whom",
-        "buy smart pills online",
-        "why isnt pluto a planet",
-        "make money without working",
-        "how to raise credit score",
-        "early onset alzhiemers",
-        "does your vote really matter",
-        "whats the state sol of california",
-        "rick and morty watch free",
-        "why does god allow suffring",
-        "best free moblle games 2019",
-        "funny animals pics",
-        "dogs with eyebrows",
-        "birds with arms",
-        "early onset alzeihmers",
-        "fairly odd parents fairy guy name",
-        "cosmo nude",
-        "why isnt 11 pronounced onety one",
-        "elon musk net worth",
-        "tesla 3 price",
-        "tesla 3 used cheap",
-        "early onset alsheimirz",
-        "elon musk nude",
-        "how to hold breath lung time",
-        "when is next election",
-        "what is my iq",
-        "qwertyuioplkjhgfdsazxcvbnm"
-        ];
+    if (typeof optionalTheWord != "undefined") {
+        this.theWord = optionalTheWord;
+        this.score.setText('');
+    } else {
+        this.theWord = [
+            "how to kill time in class",
+            "why my arm shake when i eat dirt",
+            "how to enroll online university",
+            "are there people who look like me",
+            "pictures jason shwartzman",
+            "movies out now",
+            "endgame rotten tomatoes",
+            "watch endgame free",
+            "thanos",
+            "thanos chin",
+            "thanos nude",
+            "clear history google",
+            "does your voice change as u age",
+            "painful throbbing in brain",
+            "head hurts why",
+            "brain tumor symptoms",
+            "average age brain tumor",
+            "survival rate brain tumor",
+            "cost brain tumor surgery",
+            "early onset alzheimers",
+            "is hellthy to eat eggs evewyday",
+            "difference between who and whom",
+            "buy smart pills online",
+            "why isnt pluto a planet",
+            "make money without working",
+            "how to raise credit score",
+            "early onset alzhiemers",
+            "does your vote really matter",
+            "whats the state sol of california",
+            "rick and morty watch free",
+            "why does god allow suffring",
+            "best free moblle games 2019",
+            "funny animals pics",
+            "dogs with eyebrows",
+            "birds with arms",
+            "early onset alzeihmers",
+            "fairly odd parents fairy guy name",
+            "cosmo nude",
+            "why isnt 11 pronounced onety one",
+            "elon musk net worth",
+            "tesla 3 price",
+            "tesla 3 used cheap",
+            "early onset alsheimirz",
+            "elon musk nude",
+            "how to hold breath lung time",
+            "when is next election",
+            "what is my iq",
+            "qwertyuioplkjhgfdsazxcvbnm"
+            ];
+        }
 
         this.nextWord = 0;
         this.lettersTyped = 0;
@@ -171,7 +176,7 @@ Minigame.prototype.checkText = function() {
 	//check if user typed a new letter
 	if(this.lettersTyped != this.input.value.length){
 		//check if last char typed is incorrect
-		if(this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
+		if(this.lettersTyped < this.input.value.length && this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
 			console.log("wrong");
 			this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
 			if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
@@ -180,25 +185,9 @@ Minigame.prototype.checkText = function() {
 				this.lettersTyped++;
 			}
 			this.input.startFocus();
+			this.wrong.play();
+			this.wrongCallback();
 		}
-		//check if last char typed is incorrect
-		// if(this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
-		// 	console.log("wrong");
-		// 	this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
-		// 	if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
-		// 		//go to next letter
-		// 		this.input.setText(this.input.value + " ");
-        //         this.lettersTyped++;
-		// 	}
-		// 	this.input.startFocus();
-		// }
-
-		// else{ //correct input
-		// 		console.log("correct");
-		// 		this.tock.play();
-        //         this.lettersTyped ;
-		// 	} 
-		// } 
         this.lettersTyped = this.input.value.length;
         this.tock.play();
     }
@@ -236,4 +225,8 @@ Minigame.prototype.checkIfInputIsCorrect = function() {
 
 Minigame.prototype.setCorrectTextInputCallback = function(callback) {
     this.callback = callback;
+}
+
+Minigame.prototype.setWrongTextInputCallback = function(callback) {
+    this.wrongCallback = callback;
 }

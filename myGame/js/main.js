@@ -13,6 +13,7 @@ Loading.prototype = {
 		game.load.image('loading', 'assets/img/loading.png');
 		game.load.image('legs', 'assets/img/classroom.jpg');
 		game.load.video('end', 'assets/video/gameend.webm');
+		game.load.video('student', 'assets/video/student.webm');
 		TeacherPreload(game);
 		MinigamePreload(game);
 		game.add.plugin(PhaserInput.Plugin);
@@ -48,7 +49,7 @@ Menu.prototype = {
 		//this.legs = new Phaser.Group(game);
 
 		//move everything currently in the game world to a group
-		minigame = new Minigame(game);
+		minigame = new Minigame(game, ["no phones in class"]);
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
 		//game.world.add(this.legs);
@@ -59,7 +60,6 @@ Menu.prototype = {
 		this.instructions = game.add.text(game.world.centerX, game.world.centerY, "The teacher will peek left and right.\nMove your mouse in the opposite direction to avoid getting caught.\nDon't let them see your phone!", style);
 		this.instructions.setTextBounds(0);
 		room.add(this.instructions);
-		game.stage.backgroundColor="#110000";
 
 		//make everything in the group invisible except for a small section, which will be the size of the phone
 		var screen = this.game.add.graphics(0,0);
@@ -182,6 +182,9 @@ Play.prototype = {
 
 		//move everything currently in the game world to a group
 		minigame = new Minigame(game);
+		minigame.setWrongTextInputCallback(function() {
+			teacher.hearNoise();
+		});
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
 		//game.world.add(this.legs);
@@ -218,7 +221,7 @@ Play.prototype = {
 		teacher.setCallbackWhenCaught(() => {
 			if (chances > 1) {
 				chances--;
-				var lives = "Chances: ";
+				var lives = "Chances:  ";
 				for(i=0;i<chances;i++) {
 					lives = lives + "| "
 				}
@@ -230,6 +233,18 @@ Play.prototype = {
 			}
 		});
 		room.add(teacher);
+
+		/*
+		var studentVid = game.add.video('student');
+		studentVid.play();
+		var student = game.add.sprite(300, game.world.height);
+		student.scale.setTo(1.2);
+		student.anchor.setTo(0.5,1);
+		student.loadTexture(studentVid);
+		student.events.onInputOver.add(function() {teacher.canSeeCursor(false);}, this);
+		student.events.onInputOut.add(function() {teacher.canSeeCursor(true);}, this);
+		room.add(student);
+		*/
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);

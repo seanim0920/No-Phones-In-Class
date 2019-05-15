@@ -18,7 +18,7 @@ TeacherPreload = function(game) {
 var Teacher = function(game, x, y) {
 	this.WAIT_UNTIL_START = 10;
 
-	this.startDelay = 8;
+	this.startDelay = 10;
 	this.endDelay = 15;
 	this.safe_zone = -75;
 	//refer to the constructor for the sprite object in Phaser
@@ -40,6 +40,7 @@ var Teacher = function(game, x, y) {
 	this.caughtCallback = function(){};
 	this.loadTexture(this.teacherAnim);
 	this.teacherAnim.play(true);
+	this.visible = true;
 
 	game.time.events.add(Phaser.Timer.SECOND * (this.WAIT_UNTIL_START), this.turn, this, true);
 };
@@ -49,7 +50,12 @@ Teacher.prototype = Object.create(Phaser.Sprite.prototype);
 //set the constructor for the prototype
 Teacher.prototype.constructor = Teacher;
 
+Teacher.prototype.canSeeCursor = function(visible) {
+	this.visible = visible;
+};
+
 Teacher.prototype.move = function(goRight) {
+	this.stopMoving = false;
 	//mutate first to fit the format of the other clips
 	this.scale.setTo(0.9);
 	this.y += 90;
@@ -69,7 +75,7 @@ Teacher.prototype.move = function(goRight) {
 		}
 		var check = game.time.events.loop(0, function () {
 			console.log("predicted position is " + this.x + speed);
-			if (this.x + speed < 400 || this.x + speed > game.world.width - 400) {
+			if (this.stopMoving || (this.x + speed < 400 || this.x + speed > game.world.width - 400)) {
 				game.time.events.remove(check);
 				game.time.events.remove(stop);
 				this.goback.play();
@@ -78,10 +84,7 @@ Teacher.prototype.move = function(goRight) {
 			this.x += speed;
 		}, this);
 		var stop = game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 3)), function() {
-			game.time.events.remove(check);
-			game.time.events.remove(stop);
-			this.goback.play();
-			this.loadTexture(this.goback);
+			this.stopMoving = true;
 		}, this);
 	}, this);
 
@@ -89,43 +92,6 @@ Teacher.prototype.move = function(goRight) {
 		this.neutralStance();
 	}, this);
 };
-
-Teacher.prototype.turnBoth = function(peekRight) {
-	var turnAnim = this.leftpeek;
-	var peekStart = 0.65;
-	var peekDuration = 1;
-	if (peekRight) {
-		turnAnim = this.rightpeek;
-		peekStart = 0.7;
-		peekDuration = 0.9;
-	}
-	this.music.pause();
-	this.loadTexture(turnAnim);
-	turnAnim.play();
-	turnAnim.onComplete.addOnce(this.turn, this, !peekRight);
-	game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
-		function () {
-			var check = game.time.events.loop(0, () => {
-				if (this.peek(peekRight)) {
-					game.time.events.remove(check);
-					if (!this.warned) {
-						turnAnim.onComplete.removeAll(this);
-						phone.alpha = 0;
-						minigame.alpha = 0;
-						this.warned = true;
-						this.warnvid.play();
-						this.loadTexture(this.warnvid);
-						this.warnsound.play();
-						this.warnvid.onComplete.addOnce(this.neutralStance, this);
-					} else {
-						this.caught = true;
-					}
-				}
-			}, this, peekRight);
-			game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
-		},
-	this);
-}
 
 Teacher.prototype.turn = function(peekRight) {
 	var turnAnim = this.leftpeek;
@@ -166,7 +132,7 @@ Teacher.prototype.turn = function(peekRight) {
 
 Teacher.prototype.peek = function(peekRight) {
 	//console.log('peeking direction? ' + peekRight);
-	if ((peekRight && game.input.x > this.x + this.safe_zone) || !peekRight && game.input.x < this.x - this.safe_zone) {
+	if (this.visible && (peekRight && game.input.x > this.x + this.safe_zone) || !peekRight && game.input.x < this.x - this.safe_zone) {
 		return true;
 	}
 };
@@ -185,12 +151,13 @@ Teacher.prototype.setCallbackWhenCaught = function(callback) {
 };
 
 Teacher.prototype.neutralStance = function() {
+	this.stopMoving = false;
 	this.caught = false;
 	if (this.startDelay > 3) {
-		this.startDelay -= Math.random()/3;
+		this.startDelay -= Math.random()/6;
 	}
 	if (this.endDelay > 7) {
-		this.endDelay -= Math.random()/3;
+		this.endDelay -= Math.random()/6;
 	}
 	phone.alpha = 1;
 	minigame.alpha = 1;
@@ -203,19 +170,37 @@ Teacher.prototype.neutralStance = function() {
 	var right = 0;
 	var left = 1;
 	var move = game.rnd.integerInRange(0, 4);
-	if (move < 4) {
-		var direction = game.rnd.integerInRange(right, left);
-		var both = game.rnd.integerInRange(0, 5);
-		if (this.warned && both == 5) {
-			game.time.events.add(Phaser.Timer.SECOND * (delay), this.turnBoth, this, direction == right);
-		} else {
-			game.time.events.add(Phaser.Timer.SECOND * (delay), this.turn, this, direction == right);
+	var direction = game.rnd.integerInRange(right, left);
+	game.time.events.add(Phaser.Timer.SECOND * (delay), function () {	
+		if (!this.stopMoving) {
+			if (move < 4) {
+				this.turn(direction == right);
+			}
+			else {
+				var direction = right;
+				if (this.x >= game.world.centerX) {
+					direction = left;
+				}
+				this.move(direction == right);
+			}
 		}
-	} else {
-		var direction = right;
-		if (this.x >= game.world.centerX) {
-			direction = left;
+	}, this);
+};
+
+Teacher.prototype.hearNoise = function() {
+	if (!this.stopMoving) {
+		if (this.startDelay > 3) {
+			this.startDelay -= Math.random()/3;
 		}
-		game.time.events.add(Phaser.Timer.SECOND * (delay), this.move, this, direction == right);
+		if (this.endDelay > 7) {
+			this.endDelay -= Math.random()/3;
+		}
+		this.stopMoving = true;
+		if (game.input.x > this.x) {
+			this.turn(true);
+		}
+		else {
+			this.turn(false);
+		}
 	}
 };
