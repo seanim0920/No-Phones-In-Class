@@ -30,9 +30,10 @@ var Minigame = function(game, optionalTheWord) {
 	//scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
 	var graphics = game.add.graphics(10, 10);
 	graphics.beginFill(0xdddddd);
-	var rect1 = graphics.drawRoundedRect(27, 18, 280, 90, 20);
-	rect1.alpha = 0.5;
+	this.rect1 = graphics.drawRoundedRect(27, 18, 280, 90, 20);
+	this.rect1.alpha = 0.5;
 	graphics.endFill();
+	this.rect1.y = -200;
 
 	var WebFontConfig = {
 		google: {
@@ -47,39 +48,54 @@ var Minigame = function(game, optionalTheWord) {
     this.score.setTextBounds(0);
     this.value = 0;
 
- 	var style = {
+ 	this.style = {
       font: '15px Poppins',
       fill: '#000',
       align: 'left'
     };
-    
     var logo = game.add.sprite(100, 190, 'logo');
     logo.scale.setTo(0.2);
 
-    var randText = Math.random();
-    text1 = game.add.text(rect1.x+110,rect1.y+40, "New Message - Mom", style);
-    text1.anchor.setTo(0.5);
-    text1.fontWeight = 'bold';
-    if(randText > 2/3){
-    text2 = game.add.text(rect1.x+160,rect1.y+80, "Where are you? Your sister's jazz flute\nrecital started 2 hours ago.",	style);
-    text2.anchor.setTo(0.5);
-	}
-	else if (randText>1/3){
-    text2 = game.add.text(rect1.x+150,rect1.y+80, "You never leave home without your\nYugioh deck, what's going on?",	style);
-    text2.anchor.setTo(0.5);
-	}
-	else{
-    text2 = game.add.text(rect1.x+165,rect1.y+80, "Honey, there's a stranger in your room.\nAnd he's singing 'Sweet Home Alabama'", style);
-    text2.anchor.setTo(0.5);
-	}
+    this.momText = [
+     "Where are you? Your sister's jazz flute\nrecital started 2 hours ago",
+    "You never leave home without your\nYugioh deck, what's going on?",
+    "Honey, there's a stranger in your room.\nAnd he's singing 'Sweet Home Alabama'",
+    "Did you put the chicken in the oven?\nIt was still alive.",
+    "Don't come home.",
+    "Did you do the dishes like I asked?\nThe dishwasher is missing.",
+    "I got a call from doctor Spindrift,\nyour results came back positive.",
+    "Why won't you come out of your\nroom? Unlock the door.",
+    "Look at this cute picture of \nyour father from 100 years ago. [IMG]",
+    "Your report card came in the mail today.",
+    "I just bought a new bottle of ranch\ndressing, why is it empty?",
+    "You never leave home without your\nYugioh deck, what's going on?",
+    "Honey, there's a stranger in your room.\nAnd he's singing 'Sweet Home Alabama'",
+    "Did you put the chicken in the oven?\nIt was still alive.",
+    "Don't come home.",
+    "Did you do the dishes like I asked?\nThe dishwasher is missing.",
+    "I got a call from doctor Spindrift,\nyour results came back positive.",
+    "Why won't you come out of your\nroom? Unlock the door.",
+    "Look at this cute picture of \nyour father from 100 years ago. [IMG]",
+    "Your report card came in the mail today.",
+    "I just bought a new bottle of ranch\ndressing, why is it empty?"
+    ];
+            
+    this.nextText = 0;
+    this.newMessageString = game.add.text(this.rect1.x+110,-50, "New Message - Mom", this.style);
+    this.newMessageString.anchor.setTo(0.5);
+    this.newMessageString.fontWeight = 'bold';
+
+    this.textMessage = game.add.text(this.rect1.x + (this.momText[this.nextText].length)*2.4, -50, this.momText[this.nextText],this.style);
+    this.textMessage.anchor.setTo(0.5);
     
+
+
     if (typeof optionalTheWord != "undefined") {
         this.theWord = optionalTheWord;
         this.score.setText('');
     } else {
         this.theWord = [
             "how to kill time in class",
-            "why my arm shake when i eat dirt",
             "how to enroll online university",
             "are there people who look like me",
             "pictures jason shwartzman",
@@ -90,6 +106,7 @@ var Minigame = function(game, optionalTheWord) {
             "thanos chin",
             "thanos nude",
             "clear history google",
+            "why my arm shake when i eat dirt",
             "does your voice change as u age",
             "painful throbbing in brain",
             "head hurts why",
@@ -98,7 +115,7 @@ var Minigame = function(game, optionalTheWord) {
             "survival rate brain tumor",
             "cost brain tumor surgery",
             "early onset alzheimers",
-            "is hellthy to eat eggs evewyday",
+            "is helathy to eat eggs everyday",
             "difference between who and whom",
             "buy smart pills online",
             "why isnt pluto a planet",
@@ -164,6 +181,10 @@ var Minigame = function(game, optionalTheWord) {
 
     enterKey = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
 	enterKey.onDown.add(this.checkIfInputIsCorrect, this, 0, true);
+
+	this.newTextTimer = game.time.create(false);
+    this.newTextTimer.loop(7000, this.goToNextText, this);
+    this.newTextTimer.start();
 };
 //set snow's prototype to that from the phaser sprite object
 Minigame.prototype = Object.create(Phaser.Group.prototype);
@@ -208,6 +229,7 @@ Minigame.prototype.checkIfInputIsCorrect = function() {
 		this.input.setText("");
 		this.fakeInput.setText(this.theWord[this.nextWord]);
         this.callback();
+
 	} else {        
         this.wrong.play();
 		this.input.setText("");
@@ -233,4 +255,28 @@ Minigame.prototype.setCorrectTextInputCallback = function(callback) {
 
 Minigame.prototype.setWrongTextInputCallback = function(callback) {
     this.wrongCallback = callback;
+}
+
+Minigame.prototype.goToNextText = function() {
+    console.log("next text is " + this.nextText);
+	// if(this.nextText < this.momText.size){
+        this.textPosition = -50;
+        this.correct.play();
+        this.textTimer = game.time.create(false);
+        this.textTimer.loop(1, this.moveText, this);
+        this.textTimer.start();
+        this.textMessage.setText(this.momText[this.nextText]);//set the text to new string
+        this.nextText++;//go to next string
+    // }
+    // else{this.newTextTimer.stop();}
+}
+
+Minigame.prototype.moveText = function() {
+ if(this.textPosition < (100)){//if text isnt in final position
+   		this.textMessage.y = this.textPosition;//move text down
+   		this.newMessageString.y = this.textPosition - 40;
+   		this.rect1.y = this.textPosition - 80;
+   		this.textPosition+=5;//increment position
+   	}
+   	else{this.textTimer.stop();}//reached final position. stop moving
 }

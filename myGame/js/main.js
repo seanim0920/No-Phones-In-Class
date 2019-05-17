@@ -58,7 +58,7 @@ Menu.prototype = {
 		
 		// print instructions and title to screen
 		let style = { font: "bold 32px Futura", fill: "#FFF", boundsAlignH: "center", boundsAlignV: "middle"};
-		this.instructions = game.add.text(game.world.centerX, game.world.centerY, "Move your mouse away from where the teacher is looking.\nIf the teacher comes after you, cover them with your phone.", style);
+		this.instructions = game.add.text(game.world.centerX, game.world.centerY, "The teacher will look left and right.\nMove your phone away from where the teacher is looking.\nIf the teacher comes after you, cover them with your phone.", style);
 		this.instructions.setTextBounds(0);
 		room.add(this.instructions);
 
