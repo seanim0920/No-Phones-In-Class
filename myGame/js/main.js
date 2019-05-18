@@ -221,21 +221,21 @@ Play.prototype = {
 		this.erase = game.add.audio('erase');
 
 		teacher = new Teacher(game, game.world.centerX, game.world.height + 150);
-		teacher.setCallbackWhenCaught(() => {
-			teacher.pop();
-			// if (chances > 1) {
-			// 	chances--;
-			// 	var lives = "Chances:  ";
-			// 	for(i=0;i<chances;i++) {
-			// 		lives = lives + "| "
-			// 	}
-			// 	this.livesText.setText(lives);
-			// 	this.erase.play();
-			// } else {
-			// 	game.sound.stopAll();
-			// 	game.state.start('End', true, false, {finalscore: this.score});
-			// }
-		});
+		// teacher.setCallbackWhenCaught(() => {
+		// 	teacher.pop();
+		// 	// if (chances > 1) {
+		// 	// 	chances--;
+		// 	// 	var lives = "Chances:  ";
+		// 	// 	for(i=0;i<chances;i++) {
+		// 	// 		lives = lives + "| "
+		// 	// 	}
+		// 	// 	this.livesText.setText(lives);
+		// 	// 	this.erase.play();
+		// 	// } else {
+		// 	// 	game.sound.stopAll();
+		// 	// 	game.state.start('End', true, false, {finalscore: this.score});
+		// 	// }
+		// });
 		room.add(teacher);
 
 		//safeAreas = [];
