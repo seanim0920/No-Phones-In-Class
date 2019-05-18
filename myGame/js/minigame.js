@@ -3,6 +3,11 @@ MinigamePreload = function(game) {
     game.load.audio('tock', 'assets/audio/tock.wav');
     game.load.audio('correct', 'assets/audio/shake.wav');
     game.load.audio('wrong', 'assets/audio/vibrate.mp3');
+    game.load.image('logo', 'assets/img/logo.png');
+    game.load.image('keyboard','assets/img/phone_keyboard.png');
+    game.load.image('keypad','assets/img/phone_keypad.png');
+    game.load.image('spacebar','assets/img/phone_keypad_space.png');
+    game.load.image('backspace','assets/img/phone_keypad_delete.png');
 }
 
 //constructor for minigame
@@ -46,11 +51,21 @@ var Minigame = function(game, optionalTheWord) {
     this.score.setTextBounds(0);
     this.value = 0;
 
+    this.keyboard = game.add.sprite(16,572,'keyboard');
+    //this.keyboard.tint = 0x005aff;
+    this.keyboard.anchor.setTo(0,1.0);
+    this.keypad = [];
+    this.key_value = 'qwertyuiopasdfghjklzxcvbnm '; //keys entered
+    this.key_value2 = 'QWERTYUIOPASDFGHJKLZXCVBNM '; //keyboard letter display
+
  	var style = {
       font: '15px Poppins',
       fill: '#000',
       align: 'left'
     };
+    
+    var logo = game.add.sprite(100, 190, 'logo');
+    logo.scale.setTo(0.2);
 
     var randText = Math.random();
     text1 = game.add.text(rect1.x+110,rect1.y+40, "New Message - Mom", style);
@@ -128,7 +143,7 @@ var Minigame = function(game, optionalTheWord) {
         this.nextWord = 0;
         this.lettersTyped = 0;
 
-        this.fakeInput = game.add.inputField(27, 180, {
+        this.fakeInput = game.add.inputField(27, 250, {
             font: '18px Helvetica',
             fill: 'rgba(0, 0, 0, 0.65)',
             width: 280,
@@ -140,7 +155,7 @@ var Minigame = function(game, optionalTheWord) {
     );
     this.fakeInput.setText(this.theWord[0]);
 
-    this.input = game.add.inputField(27, 180, {
+    this.input = game.add.inputField(27, 250, {
         font: '18px Helvetica',
         fill: '#000000',
         fillAlpha: 0,
@@ -160,6 +175,8 @@ var Minigame = function(game, optionalTheWord) {
 
     enterKey = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
 	enterKey.onDown.add(this.checkIfInputIsCorrect, this, 0, true);
+
+    this.init_keyboard();
 };
 //set snow's prototype to that from the phaser sprite object
 Minigame.prototype = Object.create(Phaser.Group.prototype);
@@ -169,45 +186,46 @@ Minigame.prototype.constructor = Minigame;
 Minigame.prototype.update = function() {
     this.checkText();
     this.input.update();
+    // if (game.input.keyboard.isDown(Phaser.Keyboard.DOWN))
+    //     this.movedown();
 }
+Minigame.prototype.init_keyboard = function()
+{
+    var key_row = 395; //top row of keyboard
+    var key_col = 31.9; //keypad horizontal distance
 
-Minigame.prototype.checkText = function() {
+    for (var i = 0; i < 10; i++) //draw qwertyuiop
+    {
 
-	//check if user typed a new letter
-	if(this.lettersTyped != this.input.value.length){
-		//check if last char typed is incorrect
-		if(this.lettersTyped < this.input.value.length && this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
-			console.log("wrong");
-			this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
-			if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
-				//go to next letter
-				this.input.setText(this.input.value + " ");
-				this.lettersTyped++;
-			}
-			this.input.startFocus();
-			this.wrong.play();
-			this.wrongCallback();
-		}
-        this.lettersTyped = this.input.value.length;
-        this.tock.play();
+        temp = game.add.sprite(19+(i*key_col),key_row,'keypad');
+        this.keypad.push(temp); //add keyboard button sprite to list
+        //add keyboard letter
+        game.add.text(24+(i*key_col),key_row+5,this.key_value2[i],{ font: "20px Helvetica", fill: "#000", boundsAlignH: "center", boundsAlignV: "top"});
     }
+    key_row += 46; //go to next row
+    for (var i = 0; i < 9; i++) //draw asdfghjkl
+    {
+        temp = game.add.sprite(35+(i*key_col),key_row,'keypad');
+        this.keypad.push(temp);
+        game.add.text(39+(i*key_col),key_row+5,this.key_value2[i+10],{ font: "20px Helvetica", fill: "#000", boundsAlignH: "center", boundsAlignV: "top"});
+    }
+    key_row += 46;
+    for (var i = 1; i < 8; i++) //draw zxcvbnm
+    {
+        temp = game.add.sprite(35+(i*key_col),key_row,'keypad');
+        this.keypad.push(temp);
+        game.add.text(39+(i*key_col),key_row+5,this.key_value2[i+18],{ font: "20px Helvetica", fill: "#000", boundsAlignH: "center", boundsAlignV: "top"});
+    }
+    temp = game.add.sprite(35+(3*key_col),key_row+46,'spacebar'); //draw spacebar
+    this.keypad.push(temp);
+
+    temp = game.add.sprite(297,key_row,'backspace'); //draw backspace
+    this.keypad.push(temp);
 }
 
-Minigame.prototype.checkIfInputIsCorrect = function() {
-	var temp = this.input.value;
-	if(temp == this.theWord[this.nextWord]){
-        this.correct.play();
-        this.value++;
-        this.score.setText("Score: " + this.value);
-		temp = "";
-		this.nextWord ++;
-		this.input.setText("");
-		this.fakeInput.setText(this.theWord[this.nextWord]);
-        this.callback();
-	} else {        
-        this.wrong.play();
-		this.input.setText("");
-        this.fakeInput.setText(this.theWord[this.nextWord]);
+Minigame.prototype.movedown = function() {
+    this.keyboard.y += 1;
+    console.log(this.keyboard.y);
         // let grayColor = this.fakeInput.fill;
         // this.fakeInput.fill = '#999999';
         // // let colorBlend = { step: 0 };
@@ -218,9 +236,82 @@ Minigame.prototype.checkIfInputIsCorrect = function() {
         // // //this.fakeInput.fill = grayColor;
         // // colorTween.start();
         //this.input.startFocus();
+}
+
+Minigame.prototype.checkText = function() {
+        
+        if(this.lettersTyped < this.input.value.length) //user typed something
+        {
+            //check if last char typed is incorrect
+            var index = this.key_value.indexOf(this.input.value[this.lettersTyped]);
+            var tint = 0x80a0ff;//0xc0c0c0
+            var release_time = 10;
+            if (this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped])
+            {
+                tint = 0xff8080;
+                release_time = 8;
+                this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
+                //if wrong and correct letter was a space
+                if((this.theWord[this.nextWord])[this.lettersTyped] == " ")
+                {
+                    //go to next letter
+                    this.input.setText(this.input.value + " ");
+                    this.lettersTyped++;
+                }
+                if (!this.wrong.isPlaying) //play one sound at a time
+                    this.wrong.play();
+                this.wrongCallback();
+            }
+            else //correct input
+            {
+            
+                this.lettersTyped++;
+                this.tock.play();
+            }
+
+            if (index >= 0 && index < 27) //within range
+            {
+             this.keypad[index].tint = tint;
+             game.time.events.add(Phaser.Timer.SECOND/release_time, function() { this.keypad[index].tint = 0xffffff; },this);
+            }
+            this.input.setText(this.theWord[this.nextWord].substring(0,this.lettersTyped)); //update one char at a time
+            this.checkIfInputIsCorrect(); //is input done?
+            this.input.startFocus();
+        }
+        //deleting text
+        else if (this.lettersTyped > this.input.value.length)
+        {
+            this.tock.play();
+            this.lettersTyped = this.input.value.length;
+        }
+        if (this.game.input.keyboard.isDown(Phaser.Keyboard.BACKSPACE))
+            this.keypad[27].tint = 0x80a0ff;
+        else
+            this.keypad[27].tint = 0xffffff;
+}
+
+Minigame.prototype.checkIfInputIsCorrect = function() {
+    if (this.input.value == this.theWord[this.nextWord])
+    {
+        this.lettersTyped = 0;
+        this.correct.play();
+        this.value++;
+        this.score.setText("Score: " + this.value);
+        this.nextWord ++;
+        this.input.setText("");
+        this.fakeInput.setText(this.theWord[this.nextWord]);
+        this.callback();
     }
-    this.lettersTyped = 0;
-    this.input.startFocus();
+        // let grayColor = this.fakeInput.fill;
+        // this.fakeInput.fill = '#999999';
+        // // let colorBlend = { step: 0 };
+        // // let colorTween = this.game.add.tween(colorBlend).to({ step: 100 }, 1000);
+        // // colorTween.onUpdateCallback(() => {
+        // //     this.fakeInput.fill = Phaser.Color.interpolateColor(0x990000, grayColor, 100, colorBlend.step);
+        // // });        
+        // // //this.fakeInput.fill = grayColor;
+        // // colorTween.start();
+        //this.input.startFocus();
 }
 
 Minigame.prototype.setCorrectTextInputCallback = function(callback) {
