@@ -29,9 +29,14 @@ var Minigame = function(game, optionalTheWord) {
 	//scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
 	var graphics = game.add.graphics(10, 10);
 	graphics.beginFill(0xdddddd);
-	var rect1 = graphics.drawRoundedRect(27, 18, 280, 90, 20);
-	rect1.alpha = 0.5;
+	this.messageRect = graphics.drawRoundedRect(27, 18, 280, 90, 20);
+	this.messageRect.alpha = 0.5;
+	this.responseRect = graphics.drawRoundedRect(27, 115, 138, 40, 20);
+	this.responseRect.alpha = 0.5;
+	this.responseRect2 = graphics.drawRoundedRect(170, 115, 138, 40, 20);
+	this.responseRect2.alpha = 0.5;
 	graphics.endFill();
+	this.messageRect.y = -200;
 
 	var WebFontConfig = {
 		google: {
@@ -51,24 +56,64 @@ var Minigame = function(game, optionalTheWord) {
       fill: '#000',
       align: 'left'
     };
+    this.responseStyle = {
+      font: '15px Helvetica',
+      fill: '#000',
+      align: 'left'
+    };
 
-    var randText = Math.random();
-    text1 = game.add.text(rect1.x+110,rect1.y+40, "New Message - Mom", style);
-    text1.anchor.setTo(0.5);
-    text1.fontWeight = 'bold';
-    if(randText > 2/3){
-    text2 = game.add.text(rect1.x+160,rect1.y+80, "Where are you? Your sister's jazz flute\nrecital started 2 hours ago.",	style);
-    text2.anchor.setTo(0.5);
-	}
-	else if (randText>1/3){
-    text2 = game.add.text(rect1.x+150,rect1.y+80, "You never leave home without your\nYugioh deck, what's going on?",	style);
-    text2.anchor.setTo(0.5);
-	}
-	else{
-    text2 = game.add.text(rect1.x+165,rect1.y+80, "Honey, there's a stranger in your room.\nAnd he's singing 'Sweet Home Alabama'", style);
-    text2.anchor.setTo(0.5);
-	}
-    
+    var logo = game.add.sprite(100, 190, 'logo');
+    logo.scale.setTo(0.2);
+
+    this.momText = [
+    "Where are you? Your sister's jazz flute\nrecital started 2 hours ago",
+    "You never leave home without your\nYugioh deck, what's going on?",
+    "Honey, there's a stranger in your room.\nAnd he's singing 'Sweet Home Alabama'",
+    "Did you put the chicken in the oven?\nIt was still alive.",
+    "Don't come home.",
+    "Did you do the dishes like I asked?\nThe dishwasher is missing.",
+    "I got a call from doctor Spindrift,\nyour results came back positive.",
+    "Why won't you come out of your\nroom? Unlock the door.",
+    "Look at this cute picture of \nyour father from 100 years ago. [IMG]",
+    "Your report card came in the mail today.",
+    "I JUST bought a new bottle of ranch\ndressing, why is it empty?",
+    "You never leave home without your\nYugioh deck, what's going on?",
+    "Honey, there's a stranger in your room.\nAnd he's singing 'Sweet Home Alabama'",
+    "Did you put the chicken in the oven?\nIt was still alive.",
+    "Don't come home.",
+    "Did you do the dishes like I asked?\nThe dishwasher is missing.",
+    "I got a call from doctor Spindrift,\nyour results came back positive.",
+    "Why won't you come out of your\nroom? Unlock the door.",
+    "Look at this cute picture of \nyour father from 100 years ago. [IMG]",
+    "Your report card came in the mail today.",
+    "I just bought a new bottle of ranch\ndressing, why is it empty?"
+    ];
+
+     this.responseText = [
+     "sounds good",
+     "i dont care",
+     "hold on",
+     "what?",
+     "wow",
+     "stop",
+     "im in class",
+     "ok",
+     "thats odd",
+     "why?"
+    ];
+            
+    this.nextText = 0;
+    this.newMessageString = game.add.text(this.messageRect.x+110,-50, "New Message - Mom", this.style);
+    this.newMessageString.anchor.setTo(0.5);
+    this.newMessageString.fontWeight = 'bold';
+
+    this.textMessage = game.add.text(this.messageRect.x + (this.momText[this.nextText].length)*2.4, -50, this.momText[this.nextText],this.style);
+    this.textMessage.anchor.setTo(0.5);
+    this.response1 = game.add.text(this.messageRect.x + 60, -50, this.responseText[game.rnd.integerInRange(0,this.responseText.length-1)],this.responseStyle);
+    this.response2 = game.add.text(this.messageRect.x + 202, -50, this.responseText[game.rnd.integerInRange(0,this.responseText.length-1)],this.responseStyle);
+    this.response1.alpha = 0.5;
+    this.response2.alpha = 0.5;
+
     if (typeof optionalTheWord != "undefined") {
         this.theWord = optionalTheWord;
         this.score.setText('');
@@ -102,7 +147,7 @@ var Minigame = function(game, optionalTheWord) {
             "how to raise credit score",
             "early onset alzhiemers",
             "does your vote really matter",
-            "whats the state sol of california",
+            "whats the state soil of california",
             "rick and morty watch free",
             "why does god allow suffring",
             "best free moblle games 2019",
@@ -116,31 +161,31 @@ var Minigame = function(game, optionalTheWord) {
             "elon musk net worth",
             "tesla 3 price",
             "tesla 3 used cheap",
-            "early onset alsheimirz",
+            "early onset alsheimirs",
             "elon musk nude",
-            "how to hold breath lung time",
+            "how to hold breath long time",
             "when is next election",
             "what is my iq",
             "qwertyuioplkjhgfdsazxcvbnm"
             ];
         }
 
-        this.nextWord = 0;
-        this.lettersTyped = 0;
+    this.nextWord = 0;
+    this.lettersTyped = 0;
 
-        this.fakeInput = game.add.inputField(27, 180, {
-            font: '18px Helvetica',
-            fill: 'rgba(0, 0, 0, 0.65)',
-            width: 280,
-            padding: 8,
-            borderWidth: 1,
-            borderColor: '#666666',
-            borderRadius: 15,
-        }
+    this.fakeInput = game.add.inputField(27, 250, {
+        font: '18px Helvetica',
+        fill: 'rgba(0, 0, 0, 0.65)',
+        width: 280,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: '#666666',
+        borderRadius: 15,
+    }
     );
     this.fakeInput.setText(this.theWord[0]);
 
-    this.input = game.add.inputField(27, 180, {
+    this.input = game.add.inputField(27, 250, {
         font: '18px Helvetica',
         fill: '#000000',
         fillAlpha: 0,
@@ -157,9 +202,50 @@ var Minigame = function(game, optionalTheWord) {
     this.input.focusOutOnEnter = false;
     this.input.blockInput = false;
     this.input.startFocus();
+ 
+ ///////////////////////////////////////////////
+    this.responseInput = game.add.inputField(62, 134, {
+        font: '15px Helvetica',
+        fill: '#000000',
+        fillAlpha: 0,
+        width: 280,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: '#000',
+        borderRadius: 6,
+        forceCase: PhaserInput.ForceCase.lower,
+        focusOutOnEnter: false,
+        blockInput: false,
+    }
+    );
+    this.responseInput.focusOutOnEnter = false;
+    this.responseInput.blockInput = false;
+    this.randResponse = "";
+
+     this.responseInput2 = game.add.inputField(204, 134, {
+        font: '15px Helvetica',
+        fill: '#000000',
+        fillAlpha: 0,
+        width: 280,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: '#000',
+        borderRadius: 6,
+        forceCase: PhaserInput.ForceCase.lower,
+        focusOutOnEnter: false,
+        blockInput: false,
+    }
+    );
+    this.responseInput2.focusOutOnEnter = false;
+    this.responseInput2.blockInput = false;
+    this.randResponse2 = "";
+
+    this.justTextin = false;
 
     enterKey = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
 	enterKey.onDown.add(this.checkIfInputIsCorrect, this, 0, true);
+
+    this.goToNextText();
 };
 //set snow's prototype to that from the phaser sprite object
 Minigame.prototype = Object.create(Phaser.Group.prototype);
@@ -173,24 +259,51 @@ Minigame.prototype.update = function() {
 
 Minigame.prototype.checkText = function() {
 
+	this.checkResponseText();
+	
 	//check if user typed a new letter
 	if(this.lettersTyped != this.input.value.length){
 		//check if last char typed is incorrect
 		if(this.lettersTyped < this.input.value.length && this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]){
-			console.log("wrong");
+			console.log("wrong. last typed: "+this.input.value[this.input.value.length-1] +" next correct letter: "+ this.randResponse[this.responseInput.value.length]);
 			this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
-			if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong and correct letter was a space
+			if((this.theWord[this.nextWord])[this.lettersTyped] == " "){//if wrong AND correct letter was a space
 				//go to next letter
 				this.input.setText(this.input.value + " ");
 				this.lettersTyped++;
 			}
 			this.input.startFocus();
+			if(this.justTextin == false){//dont mark as a mistake if it was a text message character
 			this.wrong.play();
 			this.wrongCallback();
+			}
 		}
         this.lettersTyped = this.input.value.length;
         this.tock.play();
     }
+}
+
+Minigame.prototype.checkResponseText = function(){
+//check if its a letter in a textmessage response
+	if(this.input.value[this.input.value.length-1] == this.randResponse[this.responseInput.value.length] && this.input.value[this.input.value.length-1] != 'ENTER'){//if last typed charater is next correct character in textresponse string
+		this.responseInput.setText(this.responseInput.value + this.input.value[this.input.value.length-1]); //set textresponseinput text to = itself plus last typed character
+		this.justTextin = true;
+		if(this.responseInput.value == this.randResponse){//if completed text
+			this.responseInput.setText("");
+			this.responseInput2.setText("");
+			this.goToNextText();
+		}
+	} else {this.justTextin = false;}
+
+	if(this.input.value[this.input.value.length-1] == this.randResponse2[this.responseInput2.value.length] && this.input.value[this.input.value.length-1] != 'ENTER'){//if last typed charater is next correct character in textresponse string
+		this.responseInput2.setText(this.responseInput2.value + this.input.value[this.input.value.length-1]); //set textresponseinput text to = itself plus last typed character
+		this.justTextin = true;
+		if(this.responseInput2.value == this.randResponse2){//if completed text
+			this.responseInput2.setText("");
+			this.responseInput.setText("");
+			this.goToNextText();
+		}
+	}
 }
 
 Minigame.prototype.checkIfInputIsCorrect = function() {
@@ -208,16 +321,6 @@ Minigame.prototype.checkIfInputIsCorrect = function() {
         this.wrong.play();
 		this.input.setText("");
         this.fakeInput.setText(this.theWord[this.nextWord]);
-        // let grayColor = this.fakeInput.fill;
-        // this.fakeInput.fill = '#999999';
-        // // let colorBlend = { step: 0 };
-        // // let colorTween = this.game.add.tween(colorBlend).to({ step: 100 }, 1000);
-        // // colorTween.onUpdateCallback(() => {
-        // //     this.fakeInput.fill = Phaser.Color.interpolateColor(0x990000, grayColor, 100, colorBlend.step);
-        // // });        
-        // // //this.fakeInput.fill = grayColor;
-        // // colorTween.start();
-        //this.input.startFocus();
     }
     this.lettersTyped = 0;
     this.input.startFocus();
@@ -229,4 +332,33 @@ Minigame.prototype.setCorrectTextInputCallback = function(callback) {
 
 Minigame.prototype.setWrongTextInputCallback = function(callback) {
     this.wrongCallback = callback;
+}
+
+Minigame.prototype.goToNextText = function() {
+	    if(this.nextText < this.momText.length){
+        this.textPosition = -50;
+        this.correct.play();
+        this.textTimer = game.time.create(false);
+        this.textTimer.loop(1, this.moveText, this);
+        this.textTimer.start();
+        this.textMessage.setText(this.momText[this.nextText]);//set the text to new string
+        this.randResponse = this.responseText[game.rnd.integerInRange(0,this.responseText.length-1)];
+        this.randResponse2 = this.responseText[game.rnd.integerInRange(0,this.responseText.length-1)];
+        this.response1.setText(this.randResponse);
+        this.response2.setText(this.randResponse2);
+        this.nextText++;//go to next string
+    }
+    else{this.newTextTimer.stop();}
+}
+
+Minigame.prototype.moveText = function() {
+ if(this.textPosition < (100)){//if text isnt in final position
+   		this.textMessage.y = this.textPosition;//move text down
+   		this.newMessageString.y = this.textPosition - 40;
+   		this.messageRect.y = this.textPosition - 80;
+   		this.response1.y = this.textPosition + 47;
+   		this.response2.y = this.textPosition + 47;
+   		this.textPosition+=5;//increment position
+   	}
+   	else{this.textTimer.stop();}//reached final position. stop moving
 }
