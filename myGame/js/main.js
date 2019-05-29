@@ -53,7 +53,7 @@ Menu.prototype = {
 		//this.legs = new Phaser.Group(game);
 
 		//move everything currently in the game world to a group
-		minigame = new Minigame(game, ["don't use your phone in class"]);
+		minigame = new Minigame(game, ["no phones in class"]);
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
 		//game.world.add(this.legs);
