@@ -522,6 +522,10 @@ Minigame.prototype.textMove = function() {
 }
 
 Minigame.prototype.goToNextText = function(){
+    textgroup = game.add.group();
+    textgroup.add(this.messageRect);
+    textgroup.add(this.textMessage);
+
     if (this.nextText < this.momText.length)
         this.nextText++;
     else

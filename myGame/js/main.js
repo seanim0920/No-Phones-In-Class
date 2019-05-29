@@ -79,8 +79,9 @@ Menu.prototype = {
 				game.state.start('Play');
 			}
 		);
-
-
+		
+		left = game.input.keyboard.addKey(Phaser.Keyboard.BACKWARD_SLASH);
+		left.onDown.add(function() {game.state.start('Play')});
 	},
 	update: function() {
 		game.canvas.style.cursor = "none";
