@@ -46,6 +46,7 @@ var Teacher = function(game, x, y) {
 	this.speed = 1;
 	this.distance = 100;
 	this.lost = false;
+	this.hidden = false;
 
 	game.time.events.add(Phaser.Timer.SECOND * (this.WAIT_UNTIL_START), this.turn, this, true);
 };
@@ -59,33 +60,41 @@ Teacher.prototype.canSeeCursor = function(visible) {
 	this.see = visible;
 };
 
-//trigger when mouse covers teacher for too long
 Teacher.prototype.come = function() {
-	// this.stopMoving = true;
-	// //mutate first to fit the format of the other clips
-	// //this.scale.setTo(1);
-	// this.y -= 80;
-	// this.scale.setTo(0.9);
-
-	// this.music.pause();
-	// this.loadTexture('come');
-	// var check = game.time.events.loop(0, function () {
-	// 	if (this.distance <= 0) {
-	// 		game.time.events.remove(check);
-	// 		if (Math.abs(game.input.x - this.x) <= 40)
-	// 			game.state.start('End', true, false, {finalscore: this.score});
-	// 	}
-	// 	this.y += 12;
-	// 	this.distance -= 1;
-	// 	this.scale.setTo(0.9 + (100-this.distance)/40);
-	// 	if (this.x < game.input.x) {
-	// 		this.x += 1;
-	// 	} else {
-	// 		this.x -= 1;
-	// 	}
-	// }, this);
-	// this.stopMoving = false;
-};
+	game.time.events.removeAll();
+	this.neutralStance();
+	this.stopMoving = true;
+	//mutate first to fit the format of the other clips
+	//this.scale.setTo(1);
+	this.music.pause();
+	this.loadTexture('come');
+	var check = game.time.events.loop(0, function () {
+		if (this.distance <= 0) {
+			game.time.events.remove(check);
+			if (Math.abs(game.input.x - this.x) <= 40) {
+				var wait = game.time.events.loop(0, function () {
+					if (!this.bottom) {
+						game.time.events.remove(wait);
+						if (Math.abs(this.x - game.input.x) < 300)
+							game.state.start('End', true, false, {finalscore: this.score});
+					}
+				});
+			}
+		}
+		this.y += 12;
+		this.distance -= 1;
+		this.scale.setTo(0.9 + (100-this.distance)/40);
+		if (this.x < game.input.x) {
+			this.x += 1;
+		} else {
+			this.x -= 1;
+		}
+		if (!this.bottom) {
+			game.time.events.remove(check);
+		}
+	}, this);
+	this.stopMoving = false;
+}
 
 //have teacher hide behind one of the students
 //students come in from the sides. sometimes the teacher will leave from the sides and hide behind one of them. scare them and the teacher will come out.
@@ -179,30 +188,30 @@ Teacher.prototype.move = function(goRight) {
 Teacher.prototype.turn = function(peekRight) {
 	console.log("going to move!");
 	if (!this.stopMoving) {
-	this.stopMoving = true;
-	var turnAnim = this.leftpeek;
-	var peekStart = 0.65;
-	var peekDuration = 1;
-	if (peekRight) {
-		turnAnim = this.rightpeek;
-		peekStart = 0.7;
-		peekDuration = 0.9;
-	}
-	this.music.pause();
-	this.loadTexture(turnAnim);
-	turnAnim.play();
-	game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
-		function () {
-			var check = game.time.events.loop(0, () => {
-				if (this.peek(peekRight)) {
-					game.time.events.remove(check);
-					this.caught = true;
-				}
-			}, this, peekRight);
-			game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
-		},
-	this);
-	turnAnim.onComplete.addOnce(this.checkIfYouLost, this);
+		this.stopMoving = true;
+		var turnAnim = this.leftpeek;
+		var peekStart = 0.65;
+		var peekDuration = 1;
+		if (peekRight) {
+			turnAnim = this.rightpeek;
+			peekStart = 0.7;
+			peekDuration = 0.9;
+		}
+		this.music.pause();
+		this.loadTexture(turnAnim);
+		turnAnim.play();
+		game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
+			function () {
+				var check = game.time.events.loop(0, () => {
+					if (this.peek(peekRight)) {
+						game.time.events.remove(check);
+						this.caught = true;
+					}
+				}, this, peekRight);
+				game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
+			},
+		this);
+		turnAnim.onComplete.addOnce(this.checkIfYouLost, this);
 	}
 };
 
@@ -230,6 +239,15 @@ Teacher.prototype.setCallbackWhenCaught = function(callback) {
 };
 
 Teacher.prototype.neutralStance = function() {
+	this.y = game.world.height + 150;
+	phone.alpha = 1;
+	minigame.alpha = 1;
+	this.scale.setTo(1.2);
+	this.music.resume();
+	this.idle();
+};
+
+Teacher.prototype.idle = function() {
 	this.stopMoving = false;
 	this.caught = false;
 	if (this.startDelay > 3) {
@@ -238,11 +256,6 @@ Teacher.prototype.neutralStance = function() {
 	if (this.endDelay > 7) {
 		this.endDelay -= Math.random()/6;
 	}
-	this.y = game.world.height + 150;
-	phone.alpha = 1;
-	minigame.alpha = 1;
-	this.scale.setTo(1.2);
-	this.music.resume();
 	this.loadTexture(this.teacherAnim);
 	var delay = game.rnd.realInRange(this.startDelay, this.endDelay);
 	var right = 0;
@@ -250,7 +263,10 @@ Teacher.prototype.neutralStance = function() {
 	var move = game.rnd.integerInRange(0, 4);
 	var direction = game.rnd.integerInRange(right, left);
 	game.time.events.add(Phaser.Timer.SECOND * (delay), function () {
-		if (!this.stopMoving) {
+		if (this.hidden) {
+			this.come();
+		}
+		else if (!this.stopMoving) {
 			if (move < 4) {
 				this.turn(direction == right);
 			}
@@ -263,17 +279,14 @@ Teacher.prototype.neutralStance = function() {
 			}
 		}
 	}, this);
-};
+}
 
 Teacher.prototype.hearNoise = function() {
 	if (!this.stopMoving) {
-		/*
-		if (game.input.x > this.x) {
-			this.turn(true);
-		}
-		else {
-			this.turn(false);
-		}*/
 		this.pop();
 	}
 };
+
+Teacher.prototype.setHidden = function(bool) {
+	this.hidden = bool;
+}

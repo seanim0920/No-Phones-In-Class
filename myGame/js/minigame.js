@@ -244,9 +244,92 @@ Minigame.prototype.checkIfInputIsCorrect = function() {
         // // //this.fakeInput.fill = grayColor;
         // // colorTween.start();
         //this.input.startFocus();
+}
+
+Minigame.prototype.checkText = function() {
+        if(this.lettersTyped < this.input.value.length) //user typed something
+        {
+            //check if last char typed is incorrect
+            if (this.newMessage) //don't check response text unless there is new message
+                this.checkResponseText();
+            var index = this.key_value.indexOf(this.input.value[this.lettersTyped]);
+            var tint = 0x80a0ff;//0xc0c0c0
+            var release_time = 10;
+            if (this.input.value[this.input.value.length-1] != (this.theWord[this.nextWord])[this.lettersTyped]) //input is wrong
+            {
+                if (!this.justTextin) //text message response is wrong as well
+                {
+                    tint = 0xff8080;
+                    release_time = 8;
+                    this.input.setText(this.input.value.substring(0,this.input.value.length - 1)); //set input text to = itself minus one character
+                    //if wrong and correct letter was a space
+                    if((this.theWord[this.nextWord])[this.lettersTyped] == " ")
+                    {
+                        //go to next letter
+                        this.input.setText(this.input.value + " ");
+                        this.lettersTyped++;
+                    }
+                    if (!this.wrong.isPlaying) //play one sound at a time
+                        this.wrong.play();
+                    this.wrongCallback();
+                }
+                else //correct text message response input
+                    this.tock.play();
+            }
+            else //correct input
+            {
+                this.lettersTyped++;
+                this.tock.play();
+            }
+
+            if (index >= 0 && index < 27) //within alphabet range, including space
+            {
+             this.keypad[index].tint = tint;
+             game.time.events.add(Phaser.Timer.SECOND/release_time, function() { this.keypad[index].tint = 0xffffff; },this);
+            }
+            this.input.setText(this.theWord[this.nextWord].substring(0,this.lettersTyped)); //update one char at a time
+            this.checkIfInputIsCorrect(); //is input done?
+            this.input.startFocus();
+        }
+        //deleting text
+        else if (this.lettersTyped > this.input.value.length)
+        {
+            this.tock.play();
+            this.lettersTyped = this.input.value.length;
+        }
+        if (this.game.input.keyboard.isDown(Phaser.Keyboard.BACKSPACE))
+            this.keypad[27].tint = 0x80a0ff;
+        else
+            this.keypad[27].tint = 0xffffff;
+}
+
+Minigame.prototype.checkIfInputIsCorrect = function() {
+    if (this.input.value == this.theWord[this.nextWord])
+    {
+        this.lettersTyped = 0;
+        if (!this.correct.isPlaying)
+            this.correct.play();
+        this.value++;
+        this.score.setText("Score: " + this.value);
+        this.nextWord ++;
+        this.input.setText("");
+        this.fakeInput.setText(this.theWord[this.nextWord]);
+        this.callback();
     }
     this.lettersTyped = 0;
     this.input.startFocus();
+}
+
+Minigame.prototype.ejectSearchBar = function() {
+    return game.add.inputField(27, 250, {
+        font: '18px Helvetica',
+        fill: 'rgba(0, 0, 0, 0.65)',
+        width: 280,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: '#666666',
+        borderRadius: 15,
+    })
 }
 
 Minigame.prototype.setCorrectTextInputCallback = function(callback) {
@@ -279,4 +362,54 @@ Minigame.prototype.moveText = function() {
    		this.textPosition+=5;//increment position
    	}
    	else{this.textTimer.stop();}//reached final position. stop moving
+}
+
+Minigame.prototype.textMove = function() {
+    this.textMessage.y = this.textPosition;//move text down
+    this.newMessageString.y = this.textPosition - 40;
+    this.messageRect.y = this.textPosition - 80;
+    this.responseInput.y = this.textPosition + 39;
+    this.responseInput2.y = this.textPosition + 39;
+    this.response1.y = this.textPosition + 47;
+    this.response2.y = this.textPosition + 47;
+}
+
+Minigame.prototype.goToNextText = function(){
+    if (this.nextText < this.momText.length)
+        this.nextText++;
+    else
+        this.nextText = 0;
+
+    this.textMessage.setText(this.momText[this.nextText]);//set the text to new string
+    this.randResponse = this.responseText[game.rnd.integerInRange(0,this.responseText.length-1)];
+    this.randResponse2 = this.responseText[game.rnd.integerInRange(0,this.responseText.length-1)];
+    this.response1.setText(this.randResponse);
+    this.response2.setText(this.randResponse2);
+}
+
+Minigame.prototype.setRoom = function(room) {
+    this.room = room;
+}
+   
+
+Minigame.prototype.scrollUp = function() {
+ if(this.textPosition > (-200)){//if text isnt in final position
+        this.textPosition-=10;//increment position by 5
+        this.textMove();
+    }
+    else
+    {
+        this.justTextin = false;
+        //change text prompts after it is out of view
+        this.goToNextText();
+        this.textTimer.stop();
+    }//reached final position. stop moving
+}
+
+Minigame.prototype.scrollDown = function() {
+ if(this.textPosition < (90)){//if text isnt in final position
+        this.textPosition+=10;//increment position by 5
+        this.textMove();
+    }
+    else{this.textTimer.stop();}//reached final position. stop moving
 }

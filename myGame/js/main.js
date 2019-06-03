@@ -11,7 +11,7 @@ Loading.prototype = {
 		game.load.audio('erase', 'assets/audio/erase.mp3');
 		game.load.image('phone', 'assets/img/phone.png');
 		game.load.image('loading', 'assets/img/loading.png');
-		game.load.image('legs', 'assets/img/classroom.jpg');
+		game.load.image('legs', 'assets/img/back.png');
 		game.load.video('end', 'assets/video/gameend.webm');
 		game.load.image('student', 'assets/img/student.png');
 		game.load.image('safearea', 'assets/img/safe.png');
@@ -63,7 +63,7 @@ Menu.prototype = {
 		room.add(this.instructions);
 
 		//make everything in the group invisible except for a small section, which will be the size of the phone
-		var screen = this.game.add.graphics(0,0);
+		var screen = game.add.graphics(0,0);
 		screen.beginFill(0xffffff, 1);
 		screen.drawRect(0, 0, this.PHONE_WIDTH, this.PHONE_HEIGHT);
 		screen.endFill(0xffffff, 1);
@@ -76,8 +76,9 @@ Menu.prototype = {
 				game.state.start('Play');
 			}
 		);
-
-
+		
+		next = game.input.keyboard.addKey(Phaser.Keyboard.BACKWARD_SLASH);
+		next.onDown.add(function() {game.state.start('Play')});
 	},
 	update: function() {
 		game.canvas.style.cursor = "none";
@@ -177,43 +178,32 @@ var Play = function(game) {
 	//DONT TOUCH
 	this.MINIGAME_OFFSET_X = 90;
 	this.MINIGAME_OFFSET_Y = 80;
+
+	this.bottom = false;
 };
 Play.prototype = {
 	create: function() {
-		var room = new Phaser.Group(game);
+		room = new Phaser.Group(game);
 		//this.legs = new Phaser.Group(game);
 
 		//move everything currently in the game world to a group
 		minigame = new Minigame(game);
-		minigame.setWrongTextInputCallback(function() {
-			teacher.hearNoise();
-		});
+		minigame.setRoom(room);
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
 		//game.world.add(this.legs);
 		game.world.add(minigame);
 		
 		//make everything in the group invisible except for a small section, which will be the size of the phone
-		var screen = this.game.add.graphics(0,0);
+		var screen = game.add.graphics(0,0);
 		screen.beginFill(0xffffff, 1);
 		screen.drawRect(0, 0, this.PHONE_WIDTH, this.PHONE_HEIGHT);
 		screen.endFill(0xffffff, 1);
 		minigame.add(screen);
 		minigame.mask = screen;
 
-		//room.create(0, 0, 'legs');
 		bg = room.create(0,0, 'legs');
 		bg.scale.setTo(3);
-		
-		// chances = 4;
-		// let style = { font: "bold 32px Futura", fill: "#FFF", boundsAlignH: "left", boundsAlignV: "middle"};
-		// var lives = "Chances:  ";
-		// for(i=0;i<chances;i++) {
-		// 	lives = lives + "| "
-		// }
-		//this.livesText = game.add.text(game.world.centerX, 200, lives, style);
-		//this.livesText.setTextBounds(0);
-		//room.add(this.livesText);
 
 		phone = game.add.sprite(0, 0, 'phone');
 		this.phoneSnap = 0;
@@ -238,21 +228,25 @@ Play.prototype = {
 		// });
 		room.add(teacher);
 
-		//safeAreas = [];
-		/*
-		var student = game.add.sprite(game.world.centerX + 500, game.world.height + 100, 'student');
-		student.anchor.setTo(0.5, 1);
-		student.scale.setTo(0.8);
-		room.add(student);
-		safearea = game.add.sprite(student.x - 10, student.y, 'safearea');
-		safearea.anchor.setTo(0.5, 1);
-		safearea.alpha = 0;
-		safearea.scale.setTo(350,700);
-		safearea.inputEnabled = true;
-		safearea.events.onInputOver.add(function() {teacher.canSeeCursor(false);}, this);
-		safearea.events.onInputOut.add(function() {teacher.canSeeCursor(true);}, this);
-		room.add(safearea);
-		//safeAreas.push(safearea);
+		messages = game.add.group();
+		students = game.add.group();
+		for (i = 0; i < 3; i++) {
+			let student = game.add.sprite(200 + game.rnd.integerInRange(-100,100) + 700*i, game.world.height + game.rnd.integerInRange(-20,20), 'student');
+			rscale = game.rnd.realInRange(-0.3,0.3);
+			student.scale.setTo(0.5,0.5);
+			student.anchor.setTo(0.5,1);
+			
+			students.add(student);
+		}
+
+		game.time.events.loop(Phaser.Timer.SECOND * game.rnd.realInRange(1.00,3.00), function() {
+			var i = game.rnd.integerInRange(0,2); 			
+
+			messages.add(new TextMessage(game, students.getChildAt(i).x, students.getChildAt(i).y-200, game.rnd.realInRange(-.7,.7),  game.rnd.realInRange(0,-5.9)));
+		},this);
+
+		room.add(messages);
+		room.add(students);
 
 		var student = game.add.sprite(game.world.centerX - 600, game.world.height + 100, 'student');
 		student.anchor.setTo(0.5, 1);
@@ -270,19 +264,48 @@ Play.prototype = {
 		*/
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
+		this.leftBound = 0;
+		this.rightBound = game.width;
 	},
 
+	setPhone: function() {
+		//horizontal movement
+		var phoneSnap = game.input.x //get cursor position
+
+		phone.x = phoneSnap - this.CURSOR_OFFSET_X; //update phone position
+		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
+	},
+	scrollView: function() {
+		//scroll up
+		if (game.input.y < 200) {
+			//go down
+			this.bottom = false;
+			teacher.setHidden(true);
+		}
+		//scroll down
+		else if (game.input.y > 600) {
+			this.bottom = true;
+			teacher.setHidden(false);
+		}
+	},
 	update: function() {
 		game.canvas.style.cursor = "none";
-		phone.x = game.input.x - this.CURSOR_OFFSET_X;
-		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
-		minigame.x = phone.x + this.MINIGAME_OFFSET_X;
-		minigame.y = phone.y + this.MINIGAME_OFFSET_Y;
+		this.scrollView();
+		this.setPhone();
+		minigame.x = phone.x -phone.offsetX + this.MINIGAME_OFFSET_X;
+		minigame.y = phone.y -phone.offsetY + this.MINIGAME_OFFSET_Y;
+		if (this.bottom && room.y - 800 >= -room.height/1.2) {
+			//go up
+			room.y -= 150;
+		}
+		else if (!this.bottom && room.y <= -50) {
+			room.y += 150;
+		}
 	}
 };
 
 // global variables
-var game = new Phaser.Game(1800, 800, Phaser.AUTO, 'phaser', null, false, false);
+var game = new Phaser.Game(1800, 1000, Phaser.AUTO, 'phaser', null, false, false);
 // states for the game
 game.state.add('Boot', Loading);
 game.state.add('Menu', Menu);
