@@ -261,7 +261,6 @@ Play.prototype = {
 		safearea2.events.onInputOut.add(function() {teacher.canSeeCursor(true);}, this);
 		room.add(safearea);
 		//safeAreas.push(safearea);	
-		*/
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
 		this.leftBound = 0;
