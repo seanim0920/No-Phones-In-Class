@@ -435,8 +435,6 @@ Minigame.prototype.checkText = function() {
             this.keypad[27].tint = 0xffffff;
 }
 
-
-
 Minigame.prototype.checkIfInputIsCorrect = function() {
     if (this.input.value == this.theWord[this.nextWord])
     {
@@ -450,6 +448,18 @@ Minigame.prototype.checkIfInputIsCorrect = function() {
         this.fakeInput.setText(this.theWord[this.nextWord]);
         this.callback();
     }
+}
+
+Minigame.prototype.ejectSearchBar = function() {
+    return game.add.inputField(27, 250, {
+        font: '18px Helvetica',
+        fill: 'rgba(0, 0, 0, 0.65)',
+        width: 280,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: '#666666',
+        borderRadius: 15,
+    })
 }
 
 Minigame.prototype.setCorrectTextInputCallback = function(callback) {
@@ -522,10 +532,6 @@ Minigame.prototype.textMove = function() {
 }
 
 Minigame.prototype.goToNextText = function(){
-    textgroup = game.add.group();
-    textgroup.add(this.messageRect);
-    textgroup.add(this.textMessage);
-
     if (this.nextText < this.momText.length)
         this.nextText++;
     else
@@ -537,6 +543,11 @@ Minigame.prototype.goToNextText = function(){
     this.response1.setText(this.randResponse);
     this.response2.setText(this.randResponse2);
 }
+
+Minigame.prototype.setRoom = function(room) {
+    this.room = room;
+}
+   
 
 Minigame.prototype.scrollUp = function() {
  if(this.textPosition > (-200)){//if text isnt in final position
