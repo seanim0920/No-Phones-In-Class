@@ -3,6 +3,7 @@ TeacherPreload = function(game) {
 	game.load.audio('speech', 'assets/audio/gibberish.mp3');
 	game.load.audio('badend', 'assets/audio/badend.mp3');
 	game.load.audio('caught', 'assets/audio/caught2.mp3');
+	game.load.audio('alert', 'assets/audio/exclamation.wav');
 	game.load.audio('warn', 'assets/audio/warning.mp3');
 	game.load.video('warning', 'assets/video/warning.webm');
 	game.load.video('goleft', 'assets/video/goleft.webm');
@@ -26,6 +27,7 @@ var Teacher = function(game, x, y) {
 	//refer to the constructor for the sprite object in Phaser
 	this.creepy = game.add.audio('music');
 	this.warnsound = game.add.audio('warn');
+	this.alert = game.add.audio('alert');
 	this.warnvid = game.add.video('warning');
 	this.leftpeek = game.add.video('turnleft');
 	this.rightpeek = game.add.video('turnright');
@@ -91,6 +93,18 @@ Teacher.prototype.come = function() {
 
 //have teacher hide behind one of the students
 //students come in from the sides. sometimes the teacher will leave from the sides and hide behind one of them. scare them and the teacher will come out.
+Teacher.prototype.init_vignette = function(vignette, frame)
+{
+	this.vignette = vignette;
+	this.vignetteFrame = frame;
+};
+
+Teacher.prototype.screen_fadeTo = function(_alpha)
+{
+	game.add.tween(this.vignetteFrame).to({alpha: _alpha},Phaser.Timer.SECOND,Phaser.Easing.Circular.Out, true);
+	game.add.tween(this.vignette).to({alpha: _alpha},Phaser.Timer.SECOND,Phaser.Easing.Circular.Out, true);
+}
+
 Teacher.prototype.pop = function() {
 	this.disappear.play();
 	if (!this.stopMoving) {
@@ -105,6 +119,7 @@ Teacher.prototype.pop = function() {
 	//game.add.tween(this.spawner).to( { x: '-850' }, 2000, Phaser.Easing.Circular.Out, true)
 	tween = game.add.tween(this).to( { y: 1500 }, 600, Phaser.Easing.Circular.Out, true);
 	tween.onComplete.add(function () {
+		this.screen_fadeTo(0.85);
 		this.loadTexture('come');
 		this.scale.setTo(2);
 		this.creepy.play();
@@ -118,6 +133,7 @@ Teacher.prototype.pop = function() {
 					console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
 					game.state.start('End', true, false, {finalscore: 0});
 				} else {
+					this.screen_fadeTo(0);
 					tween3 = game.add.tween(this).to( { y: 2200 }, 700, Phaser.Easing.Circular.Out, true);
 					tween3.onComplete.add(function () {
 						this.scale.setTo(1.2);
@@ -198,6 +214,7 @@ Teacher.prototype.turn = function(peekRight) {
 				if (this.peek(peekRight)) {
 					game.time.events.remove(check);
 					this.caught = true;
+					this.alert.play();
 				}
 			}, this, peekRight);
 			game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
