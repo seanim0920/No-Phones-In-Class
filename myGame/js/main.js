@@ -199,16 +199,6 @@ Play.prototype = {
 		bg = room.create(0,0, 'legs');
 		bg.scale.setTo(3);
 
-		this.bigBoyWatch = this.game.add.graphics(70,622);
-	    this.watchTimer = this.game.time.create(false);
-	    this.watchTimer.loop(20, this.updateWatch, this);
-	    this.watchTimer.start();
-	    this.counter = 10;
-	    this.counterMax = 10;
-	
-	    googleTimer = this.game.time.create(false);
-	    googleTimer.start();
-
 	    minigame.setCorrectTextInputCallback(function() {
 			googleTimer.destroy();//reset google Timer
 			googleTimer = this.game.time.create(false);
@@ -271,6 +261,17 @@ Play.prototype = {
 		room.add(backlayer);
 		room.add(messages);
 		room.add(students);
+		this.bigBoyWatch = this.game.add.graphics(70,622);
+	    this.watchTimer = this.game.time.create(false);
+	    this.watchTimer.loop(20, this.updateWatch, this);
+	    this.watchTimer.start();
+	    this.counter = 10;
+	    this.counterMax = 10;
+	
+	    googleTimer = this.game.time.create(false);
+		googleTimer.start();
+		
+		frontlayer.add(this.bigBoyWatch);
     },
 
 	setPhone: function() {
