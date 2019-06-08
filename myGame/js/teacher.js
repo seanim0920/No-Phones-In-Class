@@ -4,8 +4,6 @@ TeacherPreload = function(game) {
 	game.load.audio('badend', 'assets/audio/badend.mp3');
 	game.load.audio('caught', 'assets/audio/caught2.mp3');
 	game.load.audio('alert', 'assets/audio/exclamation.wav');
-	game.load.audio('warn', 'assets/audio/warning.mp3');
-	game.load.video('warning', 'assets/video/warning.webm');
 	game.load.video('turnleft', 'assets/video/turnleft.webm');
 	game.load.video('turnright', 'assets/video/turnright.webm');
 	game.load.video('walkleft', 'assets/video/walkleft.webm');
@@ -47,7 +45,7 @@ var Teacher = function(game, x, y, frontlayer, backlayer) {
 	this.music.play('', 0, 1, true);
 	Phaser.Sprite.call(this, game, x, y);	
 	this.anchor.setTo(0.5,1);
-	this.scale.setTo(1.2);
+	this.scale.setTo(1);
 	this.caught = false;
 	this.caughtCallback = function(){};
 	this.loadTexture(this.teacherAnim);

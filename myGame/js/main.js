@@ -18,6 +18,7 @@ Loading.prototype = {
 		game.load.video('end', 'assets/video/gameend.webm');
 		game.load.image('student', 'assets/img/student.png');
 		game.load.image('safearea', 'assets/img/safe.png');
+		game.load.image('watchSprite', 'assets/img/watch.png');
 		TeacherPreload(game);
 		MinigamePreload(game);
 		game.add.plugin(PhaserInput.Plugin);
@@ -194,8 +195,9 @@ Play.prototype = {
 		minigame.add(screen);
 		minigame.mask = screen;
 		
-    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
-	    watchSprite.scale.setTo(.7);
+		//room.create(0, 0, 'legs');
+		bg = room.create(0,0, 'legs');
+		bg.scale.setTo(3);
 
 		this.bigBoyWatch = this.game.add.graphics(70,622);
 	    this.watchTimer = this.game.time.create(false);
@@ -214,20 +216,14 @@ Play.prototype = {
 			console.log("reset timer: " + googleTimer.seconds);
 		});
 
-		//room.create(0, 0, 'legs');
-		bg = room.create(0,0, 'legs');
-		bg.scale.setTo(3);
-		
-
 		phone = game.add.sprite(0, 0, 'phone');
 		phone.x = game.input.x - this.CURSOR_OFFSET_X; //update phone position
 		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
 
 		this.erase = game.add.audio('erase');
 
-		teacher = new Teacher(game, game.world.centerX, game.world.height + 150);
+		teacher = new Teacher(game, game.world.centerX, game.world.height + 350);
 		room.add(teacher);
-
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
@@ -246,7 +242,35 @@ Play.prototype = {
     	shadow.drawRect(-(vignette.width/2), -vignette.height/2, vignette.width, -200);
     	shadow.drawRect(-(vignette.width/2), vignette.height/2, vignette.width, 200);
 
-    	teacher.init_vignette(vignette,shadow);
+		teacher.init_vignette(vignette,shadow);
+
+		messages = game.add.group();
+		students = game.add.group();
+		for (i = 0; i < 3; i++) {
+			let student = game.add.sprite(200 + game.rnd.integerInRange(-100,100) + 700*i, game.world.height, 'student');
+			rscale = game.rnd.realInRange(-0.3,0.3);
+			student.scale.setTo(0.5,0.5);
+			student.anchor.setTo(0.5,1);
+
+			students.add(student);
+		}
+
+		game.time.events.loop(Phaser.Timer.SECOND * game.rnd.realInRange(1.00,3.00), function() {
+			var i = game.rnd.integerInRange(0,2); 			
+
+			messages.add(new TextMessage(game, students.getChildAt(i).x, students.getChildAt(i).y-200, game.rnd.realInRange(-.7,.7),  game.rnd.realInRange(0,-5.9)));
+		},this);
+		
+		frontlayer = game.add.group();
+		backlayer = game.add.group();
+    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
+		watchSprite.scale.setTo(.7);
+		frontlayer.add(watchSprite);
+
+		backlayer.add(teacher);
+		room.add(backlayer);
+		room.add(messages);
+		room.add(students);
     },
 
 	setPhone: function() {
@@ -279,19 +303,19 @@ Play.prototype = {
 		}
 	},
 	updateWatch: function() {
-	if(googleTimer.seconds > 10 && this.counter < 9.95){
-    	this.counter+=.02;//time moves backwards
-    	//console.log("backward: " + googleTimer.seconds);
-	} else if(this.counter > 0.5){
-		this.counter-=.02;//time moves forwards
-		//console.log("foreward");
-	}
-	console.log("end angle "+ this.counter);
-    this.bigBoyWatch.clear();
-    this.bigBoyWatch.lineStyle(8, 0xFFFFFF);
-    this.bigBoyWatch.beginFill(0xFFFFFF);
-    this.bigBoyWatch.arc(0, 0, 30, this.game.math.degToRad(-90), this.game.math.degToRad(-90+(360/this.counterMax)*(this.counterMax-this.counter)), true);
-    this.bigBoyWatch.endFill();
+		if(googleTimer.seconds > 10 && this.counter < 9.95){
+			this.counter+=.02;//time moves backwards
+			//console.log("backward: " + googleTimer.seconds);
+		} else if(this.counter > 0.5){
+			this.counter-=.02;//time moves forwards
+			//console.log("foreward");
+		}
+		console.log("end angle "+ this.counter);
+		this.bigBoyWatch.clear();
+		this.bigBoyWatch.lineStyle(8, 0xFFFFFF);
+		this.bigBoyWatch.beginFill(0xFFFFFF);
+		this.bigBoyWatch.arc(0, 0, 30, this.game.math.degToRad(-90), this.game.math.degToRad(-90+(360/this.counterMax)*(this.counterMax-this.counter)), true);
+		this.bigBoyWatch.endFill();
         
 	},
 	update: function() {
