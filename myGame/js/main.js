@@ -123,7 +123,7 @@ End.prototype = {
 		this.jumpscare.play();
 		death = game.add.video('end');
 		death.play();
-		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
+		death.addToWorld(game.world.centerX,0,0.5,0,1,1);
 		death.onComplete.addOnce(function () {
 			game.state.start('Tally');
 		}, this);
