@@ -326,7 +326,7 @@ Play.prototype = {
 };
 
 // global variables
-var game = new Phaser.Game(1800, 800, Phaser.WEBGL, 'phaser', null, false, false);
+var game = new Phaser.Game(1800, 800, Phaser.CANVAS, 'phaser', null, false, false);
 // states for the game
 game.state.add('Boot', Loading);
 game.state.add('Menu', Menu);

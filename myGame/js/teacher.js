@@ -56,7 +56,7 @@ var Teacher = function(game, frontlayer, backlayer) {
 	this.idleAnimOverlap = game.add.video('drawOverlap');
 	this.disappear = game.add.audio('whoosh');
 	this.music.play('', 0, 1, true);
-	Phaser.Sprite.call(this, game, this.originalX, this.originalY);	
+	Phaser.Sprite.call(this, game, this.originalX, this.originalY, "", 1, 1);	
 	this.anchor.setTo(0.5,1);
 	this.scale.setTo(0.4);
 	this.caught = false;
@@ -271,8 +271,27 @@ Teacher.prototype.neutralStance = function() {
 	this.y = this.originalY;
 	this.music.resume();
 
-	this.idleAnim.play(true);
-	
+	this.idleAnim.play();
+	this.idleAnim.onComplete.add(
+		function() {
+			this.loadTexture(this.idleAnimOverlap);
+			this.idleAnimOverlap.play();
+			this.idleAnim.play();
+			game.time.events.add(0, function() {
+			 	this.idleAnim.stop();
+			}, this);
+		}, this
+	);
+	this.idleAnimOverlap.onComplete.add(
+		function() {
+			this.loadTexture(this.idleAnim);
+			this.idleAnim.play();
+			this.idleAnimOverlap.play();
+			game.time.events.add(0, function() {
+			 	this.idleAnimOverlap.stop();
+			}, this);
+		}, this
+	);
 	this.loadTexture(this.idleAnim);
 
 	var delay = game.rnd.realInRange(this.startDelay, this.endDelay);
