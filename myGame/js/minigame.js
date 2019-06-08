@@ -39,7 +39,6 @@ var Minigame = function(game, optionalTheWord) {
 	graphTemp.endFill();
     var logo = game.add.sprite(100, 190, 'logo');
     logo.scale.setTo(0.2);
-
     this.keyboard = game.add.sprite(16,572,'keyboard');
     //this.keyboard.tint = 0x005aff;
     this.keyboard.anchor.setTo(0,1.0);
@@ -440,7 +439,7 @@ Minigame.prototype.checkText = function() {
                     }
                     if (!this.wrong.isPlaying) //play one sound at a time
                         this.wrong.play();
-                    this.wrongCallback();
+                    this.wrongCallback(100);
                 }
                 else //correct text message response input
                     this.tock.play();
@@ -573,10 +572,11 @@ Minigame.prototype.finishText = function() {
             //scroll down animation
             this.leftonRead.add(Phaser.Timer.SECOND*12, function()
             { 
+                //mom calls you
                 this.incoming_response = true;
                 this.wrong.play();
                 this.phonecall.play();
-                this.wrongCallback();
+                this.wrongCallback(500);
                 this.responseFake.setText("");
                 this.responseFake2.setText("");
                 this.responseDisplay1.setText("");
@@ -608,7 +608,7 @@ Minigame.prototype.finishText = function() {
                 this.leftonRead.loop(Phaser.Timer.SECOND*2,
                 function(){
                     this.wrong.play();
-                    this.wrongCallback();
+                    this.wrongCallback(250);
                 },this);
             }, this);
             this.leftonRead.start();

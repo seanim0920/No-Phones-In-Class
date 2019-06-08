@@ -179,9 +179,10 @@ Play.prototype = {
 
 		//move everything currently in the game world to a group
 		minigame = new Minigame(game);
-		minigame.setWrongTextInputCallback(function() {
-			teacher.hearNoise();
+		minigame.setWrongTextInputCallback(function(amount) {
+			teacher.raiseAlert(amount);
 		});
+
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
 		game.world.add(minigame);
@@ -193,26 +194,6 @@ Play.prototype = {
 		screen.endFill(0xffffff, 1);
 		minigame.add(screen);
 		minigame.mask = screen;
-		
-    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
-	    watchSprite.scale.setTo(.7);
-
-		this.bigBoyWatch = this.game.add.graphics(70,622);
-	    this.watchTimer = this.game.time.create(false);
-	    this.watchTimer.loop(20, this.updateWatch, this);
-	    this.watchTimer.start();
-	    this.counter = 10;
-	    this.counterMax = 10;
-	
-	    googleTimer = this.game.time.create(false);
-	    googleTimer.start();
-
-	    minigame.setCorrectTextInputCallback(function() {
-			googleTimer.destroy();//reset google Timer
-			googleTimer = this.game.time.create(false);
-	    	googleTimer.start();
-			console.log("reset timer: " + googleTimer.seconds);
-		});
 
 		//room.create(0, 0, 'legs');
 		bg = room.create(0,0, 'legs');
@@ -269,30 +250,30 @@ Play.prototype = {
 		//scroll up
 		if (game.input.y < 200 && bg.y <= -50) {
 			//go down
-			this.bottom = false;
-			teacher.setPlayerVisibility(false);
+			bg.y += 50;
+			teacher.y += 50;
+			this.leftBound -= 22; //expand bounds
+			this.rightBound += 22;
+
 		}
 		//scroll down
-		else if (game.input.y > 700 && bg.y >= bg.height - 50) {
-			this.bottom = true;
-			teacher.setPlayerVisibility(true);
+		else if (game.input.y > 600 && bg.y - 800 >= -bg.height/1.2) {
+			//go up
+			bg.y -= 50;
+			teacher.y -= 50;
+			this.leftBound += 22; //shrink bounds
+			this.rightBound -= 22;
 		}
-	},
-	updateWatch: function() {
-	if(googleTimer.seconds > 10 && this.counter < 9.95){
-    	this.counter+=.02;//time moves backwards
-    	//console.log("backward: " + googleTimer.seconds);
-	} else if(this.counter > 0.5){
-		this.counter-=.02;//time moves forwards
-		//console.log("foreward");
-	}
-	console.log("end angle "+ this.counter);
-    this.bigBoyWatch.clear();
-    this.bigBoyWatch.lineStyle(8, 0xFFFFFF);
-    this.bigBoyWatch.beginFill(0xFFFFFF);
-    this.bigBoyWatch.arc(0, 0, 30, this.game.math.degToRad(-90), this.game.math.degToRad(-90+(360/this.counterMax)*(this.counterMax-this.counter)), true);
-    this.bigBoyWatch.endFill();
-        
+		if (this.leftBound > this.rightBound) //bounds are overlapping
+		{
+			this.leftBound = game.width/2; //set to center
+			this.rightBound = this.leftBound;
+		}
+		else if(this.leftBound < 0) //bounds are out of screen
+		{
+			this.leftBound = 0; //reset to default
+			this.rightBound = game.width;
+		}
 	},
 	update: function() {
 		game.canvas.style.cursor = "none";
