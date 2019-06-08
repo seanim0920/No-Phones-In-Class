@@ -5,36 +5,42 @@ Loading.prototype = {
 		// preload images
 		game.load.audio('music', 'assets/audio/spookymusic.wav');
 		game.load.audio('jumpscare', 'assets/audio/jumpscare.ogg');
-		game.load.audio('pop', 'assets/audio/pop.ogg');
+		game.load.audio('bell', 'assets/audio/bell.ogg');
 		game.load.audio('yay', 'assets/audio/yay.mp3');
-		game.load.audio('badend', 'assets/audio/badend.mp3');
 		game.load.audio('grunt', 'assets/audio/grunt.mp3');
 		game.load.audio('caught', 'assets/audio/caught.mp3');
 		game.load.audio('erase', 'assets/audio/erase.mp3');
+        game.load.audio('slice', 'assets/audio/slice.wav');
+        game.load.audio('scarymusic', 'assets/audio/scarymusic.mp3');
 		game.load.image('phone', 'assets/img/phone.png');
 		game.load.image('loading', 'assets/img/loading.png');
 		game.load.image('vignette','assets/img/vignette.png');
-		game.load.image('legs', 'assets/img/classroom.jpg');
-		game.load.video('end', 'assets/video/gameend.webm');
+		game.load.image('background', 'assets/img/background.png');
+		game.load.video('end', 'assets/video/gameover.mp4');
 		game.load.image('student', 'assets/img/student.png');
 		game.load.image('safearea', 'assets/img/safe.png');
 		game.load.image('watchSprite', 'assets/img/watch.png');
-		TeacherPreload(game);
-		MinigamePreload(game);
+		game.load.image('foreground', 'assets/img/chairs.png');
 		game.add.plugin(PhaserInput.Plugin);
-		game.load.onLoadComplete.add(function() {
-			game.state.start('Menu');
-		}, this);
 	},
 	create: function() {
-		phone = game.add.sprite(0, 0, 'phone');
-		phone.anchor.setTo(0.5);
-		this.loadIcon = game.add.sprite(100, 100, 'loading');
-		this.loadIcon.anchor.setTo(0.5);
-		game.load.start();
+		this.loaded = false;
+		this.loadIcon = game.add.sprite(game.width/2, game.height/2, 'loading');
+		this.loadIcon.anchor.setTo(0.5,0.5);
 	},
 	update: function() {
-		this.loadIcon.angle++;
+		this.loadIcon.angle += 5;
+		if (!this.loaded)
+		{
+			this.loaded = true;
+
+			TeacherPreload(game);
+			MinigamePreload(game);
+			game.load.onLoadComplete.add(function() {
+				game.state.start('Menu');
+			}, this);
+			game.load.start();
+		}
 	}
 };
 
@@ -50,7 +56,7 @@ var Menu = function(game) {
 	this.MINIGAME_OFFSET_Y = 80;
 };
 Menu.prototype = {
-	create: function() {		
+	create: function() {
 		var room = new Phaser.Group(game);
 		//this.legs = new Phaser.Group(game);
 
@@ -58,14 +64,22 @@ Menu.prototype = {
 		minigame = new Minigame(game, ["no phones in class"]);
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
+		var text = game.add.text(0, 64, 'No Phones in Class', { align: 'center', font: '160px Chiller', fill: '#ff0000' });
+		text.x = (game.width/2)-(text.width/2);
+		text = game.add.text(32, 200, '\nMovement: Cursor\nTyping: Keyboard',{ align: 'center',font: '48px Penultimate', fill: '#ffff00' });
+		text.x = (game.width/2)-(text.width/2);
+		text = game.add.text(16,375,"Move your mouse away from where the teacher is looking."
+			+"\nIf the teacher comes after you, move your phone away from them!"
+			+"\nRespond to Mom with correct text messages"
+			+"\nBut most importantly:, don't leave Mom on read!",{ font: '36px Penultimate', fill: '#fff' });
+		text.x = (game.width/2)-(text.width/2);
+		text = game.add.text(0,650, '[Type search Prompt To Play]', {font: '48px Penultimate', fill: '#ff0000'});
+		text.x = (game.width/2)-(text.width/2);
 		//game.world.add(this.legs);
 		game.world.add(minigame);
 		
 		// print instructions and title to screen
-		let style = { font: "bold 32px Futura", fill: "#FFF", boundsAlignH: "center", boundsAlignV: "middle"};
-		this.instructions = game.add.text(game.world.centerX, game.world.centerY, "Move your mouse away from where the teacher is looking.\nIf the teacher comes after you, cover them with your phone.", style);
-		this.instructions.setTextBounds(0);
-		room.add(this.instructions);
+
 
 		//make everything in the group invisible except for a small section, which will be the size of the phone
 		var screen = this.game.add.graphics(0,0);
@@ -98,13 +112,11 @@ Menu.prototype = {
 // Game Over state
 var End = function(game) {};
 End.prototype = {
-	init: function(config) {
+	init: function(score) {
 		// take in a score and save it
-		this.finalscore = config.finalscore;
+		this.finalscore = score;
 	},
 	create: function() {
-		music = game.add.audio('music');
-		music.play('', 0, 0.5, true);
 		this.caught = game.add.audio('caught');
 		this.caught.play();
 		this.jumpscare = game.add.audio('jumpscare');
@@ -113,8 +125,7 @@ End.prototype = {
 		death.play();
 		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
 		death.onComplete.addOnce(function () {
-			music.stop();
-			game.state.start('Menu', true, false, {finalscore: this.score});
+			game.state.start('Tally', true,false, this.finalscore, /*time elapsed*/19, /*truth discovered*/99);
 		}, this);
 	},
 	update: function() {
@@ -144,21 +155,73 @@ Win.prototype = {
 		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
 		death.onComplete.addOnce(function () {
 			music.stop();
-			game.state.start('Menu', true, false, {finalscore: this.score});
+			game.state.start('GameOver', true,false, 64, /*time elapsed*/19, /*truth discovered*/99);
 		}, this);
 	},
-	update: function() {
-		// restart the game when the up key is pressed
-		cursors = game.input.keyboard.createCursorKeys();
-		if (cursors.up.isDown)
-		{
-			game.state.start('Play');
-		}
-	}
 };
 
 
+var Tally = function(game) {};
+Tally.prototype = {
+    init: function(score, timeElapsed, truthPercent, record) {
+        this.score = score; // copy score parameter
+        this.timeElapsed = timeElapsed;
+        this.truthPercent = truthPercent;
+        this.record = record;
+    },
+    create: function() {
+        scaryMusic = game.add.audio('scarymusic');
+        scaryMusic.play();
+        this.increment = Math.floor(this.score / 120);
+        var displays = ['YOU ARE DEAD', '\nTime educated: ' + this.timeElapsed + ' hours', '\n\ntruth discovered: ' + this.truthPercent + '%']; // display final score]
+        var pos;
+        var style = {
+            font: '64px Penultimate',
+            fill: '#fff'
+        };
+        this.finalOutput = game.add.text(16, 200, '', style); // display final score
+        this.finalOutput.alpha = 0;
+        this.next = game.add.audio('slice');
+        //display final output one by one
+        for (var i = 0; i < 3; i++) {
+            var string = displays[i];
+            this.finalOutput.text = string;
+            pos = (game.width / 2) - (this.finalOutput.width / 2);
+            game.time.events.add((Phaser.Timer.SECOND / 2) * i, function(text, pos) {
+                this.next.play();
+                game.add.text(pos, 200, text, style);
+            }, this, string, pos);
+        }
+        game.time.events.add(Phaser.Timer.SECOND * 2, function() {
+            this.finalOutput.fontSize = '96px';
+            this.finalOutput.text = '';
+            pos = (game.width / 2) - (this.finalOutput.width / 2);
+            this.bell = game.add.audio('bell');
+            this.bell.play();
+            this.finalOutput.text = '[SPACE] to retake the course';
+            this.finalOutput.alpha = 1;
+            this.finalOutput.x = pos - 500;
+            this.finalOutput.y = 72 * 6;
+            this.finalOutput.fill = '#ff0000';
 
+            // game.time.events.add((Phaser.Timer.SECOND/2)*digits.length,function()
+            // {
+            // this.finalOutput.fontSize = '32px';
+            // this.finalOutput.text = '\n\n\nPress [SPACE] to restart';
+            // this.finalOutput.fill = '#ff0000';
+            // pos = (game.width/2)-(this.finalOutput.width/2);
+            // this.finalOutput.x = pos
+
+            // this.next = game.add.audio('boom');
+            // this.next.play();
+            // },this);
+        }, this);
+    },
+    update: function(){
+    	if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) // restart if SPACE is pressed
+			game.state.start('Menu', true, false, {finalscore: this.score});
+    }
+};
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
@@ -180,11 +243,24 @@ Play.prototype = {
 
 		//move everything currently in the game world to a group
 		minigame = new Minigame(game);
-		minigame.setWrongTextInputCallback(function() {
-			teacher.hearNoise();
+		minigame.setWrongTextInputCallback(function(amount) {
+			teacher.raiseAlert(amount);
 		});
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
+		
+		backlayer = game.add.group();
+    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
+		watchSprite.scale.setTo(.7);
+		this.bigBoyWatch = this.game.add.graphics(70,622);
+	    this.watchTimer = this.game.time.create(false);
+	    this.watchTimer.loop(20, this.updateWatch, this);
+	    this.watchTimer.start();
+	    this.counter = 10;
+	    this.counterMax = 10;
+	
+	    googleTimer = this.game.time.create(false);
+		googleTimer.start();
 		game.world.add(minigame);
 		
 		//make everything in the group invisible except for a small section, which will be the size of the phone
@@ -196,8 +272,8 @@ Play.prototype = {
 		minigame.mask = screen;
 		
 		//room.create(0, 0, 'legs');
-		bg = room.create(0,0, 'legs');
-		bg.scale.setTo(3);
+		bg = room.create(0,-200, 'background');
+		bg.scale.setTo(0.9);
 
 	    minigame.setCorrectTextInputCallback(function() {
 			googleTimer.destroy();//reset google Timer
@@ -212,8 +288,11 @@ Play.prototype = {
 
 		this.erase = game.add.audio('erase');
 
-		teacher = new Teacher(game, game.world.centerX, game.world.height + 350);
-		room.add(teacher);
+		frontlayer = game.add.group();
+		teacher = new Teacher(game, frontlayer, backlayer);
+
+		backlayer.add(teacher);
+		room.add(backlayer);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
@@ -235,6 +314,7 @@ Play.prototype = {
 		teacher.init_vignette(vignette,shadow);
 
 		messages = game.add.group();
+		/*
 		students = game.add.group();
 		for (i = 0; i < 3; i++) {
 			let student = game.add.sprite(200 + game.rnd.integerInRange(-100,100) + 700*i, game.world.height, 'student');
@@ -249,29 +329,11 @@ Play.prototype = {
 			var i = game.rnd.integerInRange(0,2); 			
 
 			messages.add(new TextMessage(game, students.getChildAt(i).x, students.getChildAt(i).y-200, game.rnd.realInRange(-.7,.7),  game.rnd.realInRange(0,-5.9)));
-		},this);
-		
-		frontlayer = game.add.group();
-		backlayer = game.add.group();
-    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
-		watchSprite.scale.setTo(.7);
-		frontlayer.add(watchSprite);
+		},this);*/
 
-		backlayer.add(teacher);
-		room.add(backlayer);
-		room.add(messages);
-		room.add(students);
-		this.bigBoyWatch = this.game.add.graphics(70,622);
-	    this.watchTimer = this.game.time.create(false);
-	    this.watchTimer.loop(20, this.updateWatch, this);
-	    this.watchTimer.start();
-	    this.counter = 10;
-	    this.counterMax = 10;
-	
-	    googleTimer = this.game.time.create(false);
-		googleTimer.start();
-		
-		frontlayer.add(this.bigBoyWatch);
+		fg = backlayer.create(0,500, 'foreground');
+		//room.add(messages);
+		//room.add(students);
     },
 
 	setPhone: function() {
@@ -298,7 +360,7 @@ Play.prototype = {
 			teacher.setPlayerVisibility(false);
 		}
 		//scroll down
-		else if (game.input.y > 700 && bg.y >= bg.height - 50) {
+		else if (game.input.y > 700) {
 			this.bottom = true;
 			teacher.setPlayerVisibility(true);
 		}
@@ -311,7 +373,7 @@ Play.prototype = {
 			this.counter-=.02;//time moves forwards
 			//console.log("foreward");
 		}
-		console.log("end angle "+ this.counter);
+		//console.log("end angle "+ this.counter);
 		this.bigBoyWatch.clear();
 		this.bigBoyWatch.lineStyle(8, 0xFFFFFF);
 		this.bigBoyWatch.beginFill(0xFFFFFF);
@@ -321,7 +383,7 @@ Play.prototype = {
 	},
 	update: function() {
 		game.canvas.style.cursor = "none";
-		this.scrollView();
+		//this.scrollView();
 		this.setPhone();
 		minigame.x = phone.x -phone.offsetX + this.MINIGAME_OFFSET_X;
 		minigame.y = phone.y -phone.offsetY + this.MINIGAME_OFFSET_Y;
@@ -329,10 +391,11 @@ Play.prototype = {
 };
 
 // global variables
-var game = new Phaser.Game(1800, 800, Phaser.AUTO, 'phaser', null, false, false);
+var game = new Phaser.Game(1800, 800, Phaser.CANVAS, 'phaser', null, false, false);
 // states for the game
 game.state.add('Boot', Loading);
 game.state.add('Menu', Menu);
 game.state.add('Play', Play);
 game.state.add('End', End);
+game.state.add('Tally', Tally);
 game.state.start('Boot');
