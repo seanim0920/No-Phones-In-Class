@@ -249,29 +249,13 @@ Play.prototype = {
 		//scroll up
 		if (game.input.y < 200 && bg.y <= -50) {
 			//go down
-			bg.y += 50;
-			teacher.y += 50;
-			this.leftBound -= 22; //expand bounds
-			this.rightBound += 22;
-
+			this.bottom = false;
+			teacher.setPlayerVisibility(false);
 		}
 		//scroll down
-		else if (game.input.y > 600 && bg.y - 800 >= -bg.height/1.2) {
-			//go up
-			bg.y -= 50;
-			teacher.y -= 50;
-			this.leftBound += 22; //shrink bounds
-			this.rightBound -= 22;
-		}
-		if (this.leftBound > this.rightBound) //bounds are overlapping
-		{
-			this.leftBound = game.width/2; //set to center
-			this.rightBound = this.leftBound;
-		}
-		else if(this.leftBound < 0) //bounds are out of screen
-		{
-			this.leftBound = 0; //reset to default
-			this.rightBound = game.width;
+		else if (game.input.y > 700 && bg.y >= bg.height - 50) {
+			this.bottom = true;
+			teacher.setPlayerVisibility(true);
 		}
 	},
 	update: function() {
