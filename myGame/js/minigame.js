@@ -49,7 +49,7 @@ var Minigame = function(game, optionalTheWord) {
     this.init_keyboard();
 	// Create text at the corner to print the score
 	//scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
-	this.messages = game.add.graphics(10, 10);
+	this.messages = game.add.graphics(10, -210);
     this.messages.alpha = 0.75;
     this.messages.beginFill(0xdddddd);
     this.messages.drawRoundedRect(27, 18, 280, 90, 20);
@@ -66,11 +66,6 @@ var Minigame = function(game, optionalTheWord) {
 	};
 	//  Load the Google WebFont Loader script
     game.load.script('font.poppins', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
-
-    let titlestyle = { font: "bold 32px Futura", fill: "#000", boundsAlignH: "center", boundsAlignV: "top"};
-    this.score = game.add.text(175, 300, 'Score: 0', titlestyle);
-    this.score.setTextBounds(0);
-    this.value = 0;
 
  	this.style = {
       font: '15px Helvetica',
@@ -275,7 +270,9 @@ var Minigame = function(game, optionalTheWord) {
     this.incoming_response = false;
     this.time = 0;
     this.textPosition = 0;
-    this.finishText();
+    if (typeof optionalTheWord == "undefined") {
+        this.finishText();
+    }
     //incoming call screen
     this.incoming = game.add.sprite(8,-20,'incoming');
     this.incoming.anchor.setTo(0.0,0.0);
@@ -440,7 +437,7 @@ Minigame.prototype.checkText = function() {
                     }
                     if (!this.wrong.isPlaying) //play one sound at a time
                         this.wrong.play();
-                    this.wrongCallback(100);
+                    this.wrongCallback(250);
                 }
                 else //correct text message response input
                     this.tock.play();
@@ -480,8 +477,6 @@ Minigame.prototype.checkIfInputIsCorrect = function() {
         this.lettersTyped = 0;
         if (!this.correct.isPlaying)
             this.correct.play();
-        this.value++;
-        this.score.setText("Score: " + this.value);
         this.nextWord ++;
         this.input.setText("");
         this.fakeInput.setText(this.theWord[this.nextWord]);
@@ -495,6 +490,10 @@ Minigame.prototype.setCorrectTextInputCallback = function(callback) {
 
 Minigame.prototype.setWrongTextInputCallback = function(callback) {
     this.wrongCallback = callback;
+}
+
+Minigame.prototype.setAcceptTextInputCallback = function(callback) {
+    this.acceptCallback = callback;
 }
 
 Minigame.prototype.checkResponseText = function(){
@@ -522,6 +521,9 @@ Minigame.prototype.checkResponseText = function(){
         this.responseDisplay2.setText(this.responseFake2.value);
         this.justTextin = true;
         var correctResponseInt = this.momText[this.nextText][3];
+        if (this.responseFake2.value == "accept") {
+            this.acceptCallback();
+        }
         if(this.responseFake2.value == this.randResponse2 && (this.incoming_response||this.responseFake2.value == this.momText[this.nextText][correctResponseInt])){//if completed text
             console.log(this.momText[this.nextText][correctResponseInt]);
             this.responseFake2.setText("");
@@ -608,7 +610,7 @@ Minigame.prototype.finishText = function() {
                 this.leftonRead.loop(Phaser.Timer.SECOND*2,
                 function(){
                     this.wrong.play();
-                    this.wrongCallback(250);
+                    this.wrongCallback(100);
                 },this);
             }, this);
             this.leftonRead.start();
@@ -629,26 +631,28 @@ Minigame.prototype.textMove = function() {
 }
 
 Minigame.prototype.goToNextText = function(){
-    //delete last text from list
-    this.momText[this.nextText][3] = -1;//set current text to null after correctly responded to
-    this.nextText = game.rnd.integerInRange(0, this.momText.length-1);//set new text to a random one
+    if (this.momText.length > 0) {
+        //delete last text from list
+        this.momText[this.nextText][3] = -1;//set current text to null after correctly responded to
+        this.nextText = game.rnd.integerInRange(0, this.momText.length-1);//set new text to a random one
 
-    if(this.momText[this.nextText][3] == -1){//if its a repeat text, go to the next one
-        this.goToNextText();
-    }
+        if(this.momText[this.nextText][3] == -1){//if its a repeat text, go to the next one
+            this.goToNextText();
+        }
 
-    if( this.momText[this.nextText][3] != -1){//prevent previous recursions from changing values
-        this.textMessage.setText(this.momText[this.nextText][0]);//set the text to new string
-        //randomized order
-        this.randResponse = this.momText[this.nextText][1];
-        this.randResponse2 = this.momText[this.nextText][2];
-        this.response1.setText(this.randResponse);
-        this.response2.setText(this.randResponse2);
+        if( this.momText[this.nextText][3] != -1){//prevent previous recursions from changing values
+            this.textMessage.setText(this.momText[this.nextText][0]);//set the text to new string
+            //randomized order
+            this.randResponse = this.momText[this.nextText][1];
+            this.randResponse2 = this.momText[this.nextText][2];
+            this.response1.setText(this.randResponse);
+            this.response2.setText(this.randResponse2);
+        }
+        this.response1.x = this.center_text(this.response1,37+(138/2));
+        this.response2.x = this.center_text(this.response2,180+(138/2));
+        this.responseDisplay1.x = this.response1.x;
+        this.responseDisplay2.x = this.response2.x;
     }
-    this.response1.x = this.center_text(this.response1,37+(138/2));
-    this.response2.x = this.center_text(this.response2,180+(138/2));
-    this.responseDisplay1.x = this.response1.x;
-    this.responseDisplay2.x = this.response2.x;
 }
 
 Minigame.prototype.scrollUp = function() {

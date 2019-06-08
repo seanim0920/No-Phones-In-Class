@@ -4,6 +4,7 @@ Loading.prototype = {
 	preload: function() {
 		// preload images
 		game.load.audio('music', 'assets/audio/spookymusic.wav');
+		game.load.audio('intro', 'assets/audio/intro.wav');
 		game.load.audio('jumpscare', 'assets/audio/jumpscare.ogg');
 		game.load.audio('yay', 'assets/audio/yay.mp3');
 		game.load.audio('grunt', 'assets/audio/grunt.mp3');
@@ -53,6 +54,7 @@ Menu.prototype = {
 		var room = new Phaser.Group(game);
 		//this.legs = new Phaser.Group(game);
 
+		game.add.audio('intro').play();
 		//move everything currently in the game world to a group
 		minigame = new Minigame(game, ["no phones in class"]);
 		game.world.moveAll(minigame, true);
@@ -62,7 +64,7 @@ Menu.prototype = {
 		
 		// print instructions and title to screen
 		let style = { font: "bold 32px Futura", fill: "#FFF", boundsAlignH: "center", boundsAlignV: "middle"};
-		this.instructions = game.add.text(game.world.centerX, game.world.centerY, "Move your mouse away from where the teacher is looking.\nIf the teacher comes after you, cover them with your phone.", style);
+		this.instructions = game.add.text(game.world.centerX, game.world.centerY, "Move your mouse away from where the teacher is looking.", style);
 		this.instructions.setTextBounds(0);
 		room.add(this.instructions);
 
@@ -74,7 +76,7 @@ Menu.prototype = {
 		minigame.add(screen);
 		minigame.mask = screen;
 
-		phone = game.add.sprite(0, 0, 'phone');
+		phone = game.add.sprite(0,0, 'phone');
 		minigame.setCorrectTextInputCallback(
 			function() {
 				game.state.start('Play');
@@ -104,16 +106,17 @@ End.prototype = {
 	create: function() {
 		music = game.add.audio('music');
 		music.play('', 0, 0.5, true);
-		this.caught = game.add.audio('caught');
-		this.caught.play();
+		//this.caught = game.add.audio('caught');
+		//this.caught.play();
 		this.jumpscare = game.add.audio('jumpscare');
 		this.jumpscare.play();
 		death = game.add.video('end');
 		death.play();
-		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
+		death.addToWorld(game.world.centerX,0,0.5,0,0.7,0.7);
 		death.onComplete.addOnce(function () {
 			music.stop();
-			game.state.start('Menu', true, false, {finalscore: this.score});
+			location.reload();
+			game.state.start('Menu', true, false);
 		}, this);
 	},
 	update: function() {
@@ -182,22 +185,18 @@ Play.prototype = {
 		minigame.setWrongTextInputCallback(function(amount) {
 			teacher.raiseAlert(amount);
 		});
+		minigame.setAcceptTextInputCallback(function(amount) {
+			teacher.sideEye();
+		});
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
 		
+		//room.create(0, 0, 'legs');
+		bg = room.create(0,-300, 'background');
+		bg.scale.setTo(1);
+		
 		backlayer = game.add.group();
-    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
-		watchSprite.scale.setTo(.7);
-		this.bigBoyWatch = this.game.add.graphics(70,622);
-	    this.watchTimer = this.game.time.create(false);
-	    this.watchTimer.loop(20, this.updateWatch, this);
-	    this.watchTimer.start();
-	    this.counter = 10;
-	    this.counterMax = 10;
-	
-	    googleTimer = this.game.time.create(false);
-		googleTimer.start();
-		game.world.add(minigame);
+		room.add(backlayer);
 		
 		//make everything in the group invisible except for a small section, which will be the size of the phone
 		var screen = this.game.add.graphics(0,0);
@@ -206,28 +205,33 @@ Play.prototype = {
 		screen.endFill(0xffffff, 1);
 		minigame.add(screen);
 		minigame.mask = screen;
-		
-		//room.create(0, 0, 'legs');
-		bg = room.create(0,-200, 'background');
-		bg.scale.setTo(0.9);
 
-	    minigame.setCorrectTextInputCallback(function() {
-			googleTimer.destroy();//reset google Timer
-			googleTimer = this.game.time.create(false);
-	    	googleTimer.start();
-			console.log("reset timer: " + googleTimer.seconds);
+	    minigame.setCorrectTextInputCallback(() => {
+			this.counter += 5;
 		});
-
-		phone = game.add.sprite(0, 0, 'phone');
-		phone.x = game.input.x - this.CURSOR_OFFSET_X; //update phone position
-		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
 
 		this.erase = game.add.audio('erase');
 
 		frontlayer = game.add.group();
-		teacher = new Teacher(game, frontlayer, backlayer);
+		fg = frontlayer.create(0,500, 'foreground');
+		
+    	watchSprite = frontlayer.create(-230, 410, 'watchSprite'); //draw wrist watch
+		watchSprite.scale.setTo(.7);
+		this.bigBoyWatch = this.game.add.graphics(70,622);
+		frontlayer.add(this.bigBoyWatch);
+	    this.watchTimer = this.game.time.create(false);
+	    this.watchTimer.loop(20, this.updateWatch, this);
+	    this.watchTimer.start();
+	    this.counter = 0;
+	    this.counterMax = 100;
+		
+		frontlayer.add(minigame);
+		phone = frontlayer.create(0, 0, 'phone');
+		phone.x = game.input.x - this.CURSOR_OFFSET_X; //update phone position
+		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
+
+		teacher = new Teacher(game, frontlayer, backlayer, minigame);
 		backlayer.add(teacher);
-		room.add(backlayer);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
@@ -266,7 +270,6 @@ Play.prototype = {
 			messages.add(new TextMessage(game, students.getChildAt(i).x, students.getChildAt(i).y-200, game.rnd.realInRange(-.7,.7),  game.rnd.realInRange(0,-5.9)));
 		},this);*/
 
-		fg = backlayer.create(0,500, 'foreground');
 		//room.add(messages);
 		//room.add(students);
     },
@@ -301,11 +304,8 @@ Play.prototype = {
 		}
 	},
 	updateWatch: function() {
-		if(googleTimer.seconds > 10 && this.counter < 9.95){
-			this.counter+=.02;//time moves backwards
-			//console.log("backward: " + googleTimer.seconds);
-		} else if(this.counter > 0.5){
-			this.counter-=.02;//time moves forwards
+		if(this.counter > 0){
+			this.counter-=.01;//time moves backwards
 			//console.log("foreward");
 		}
 		//console.log("end angle "+ this.counter);
@@ -322,6 +322,9 @@ Play.prototype = {
 		this.setPhone();
 		minigame.x = phone.x -phone.offsetX + this.MINIGAME_OFFSET_X;
 		minigame.y = phone.y -phone.offsetY + this.MINIGAME_OFFSET_Y;
+		if (game.input.x - 100 < teacher.x && game.input.x + 100 > teacher.x && game.input.y + 300 > teacher.y && game.input.y - 100 < teacher.y) {
+			teacher.raiseAlert(20);
+		}
 	}
 };
 
