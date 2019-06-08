@@ -323,7 +323,7 @@ Play.prototype = {
 		minigame.x = phone.x -phone.offsetX + this.MINIGAME_OFFSET_X;
 		minigame.y = phone.y -phone.offsetY + this.MINIGAME_OFFSET_Y;
 		if (game.input.x - 100 < teacher.x && game.input.x + 100 > teacher.x && game.input.y + 300 > teacher.y && game.input.y - 100 < teacher.y) {
-			teacher.raiseAlert(20);
+			teacher.raiseAlert(10);
 		}
 	}
 };

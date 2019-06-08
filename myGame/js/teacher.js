@@ -30,7 +30,7 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.WAIT_UNTIL_START = 1;
 	
 	this.originalY = game.world.height - 100;
-	this.originalX = game.world.centerX;
+	this.originalX = game.world.centerX + 300;
 	this.startDelay = 10;
 	this.endDelay = 15;
 	this.safe_zone = -75;
