@@ -37,8 +37,6 @@ Loading.prototype = {
 		{
 			this.loaded = true;
 
-			TeacherPreload(game);
-			MinigamePreload(game);
 			game.load.onLoadComplete.add(function() {
 				game.state.start('Menu');
 			}, this);
@@ -93,7 +91,7 @@ Menu.prototype = {
 		);
 		
 		left = game.input.keyboard.addKey(Phaser.Keyboard.BACKWARD_SLASH);
-		left.onDown.add(function() {game.state.start('Play')});
+		left.onDown.add(function() {game.state.start('Play', true, false)});
 	},
 	update: function() {
 		game.canvas.style.cursor = "none";
@@ -123,7 +121,7 @@ End.prototype = {
 		death.play();
 		death.addToWorld(game.world.centerX,0,0.5,0,0.7,0.7);
 		death.onComplete.addOnce(function () {
-			game.state.start('Tally', true,false, this.finalscore, /*time elapsed*/19, /*truth discovered*/99);
+			game.state.start('Tally');
 		}, this);
 	},
 	update: function() {
@@ -153,7 +151,7 @@ Win.prototype = {
 		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
 		death.onComplete.addOnce(function () {
 			music.stop();
-			game.state.start('GameOver', true,false, 64, /*time elapsed*/19, /*truth discovered*/99);
+			game.state.start('GameOver');
 		}, this);
 	},
 };
@@ -201,6 +199,7 @@ Tally.prototype = {
             this.finalOutput.x = pos - 500;
             this.finalOutput.y = 72 * 6;
             this.finalOutput.fill = '#ff0000';
+			game.state.start('Menu');
 
             // game.time.events.add((Phaser.Timer.SECOND/2)*digits.length,function()
             // {
@@ -217,8 +216,8 @@ Tally.prototype = {
     },
     update: function(){
     	if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) // restart if SPACE is pressed
-			location.reload();
-			//game.state.start('Menu', true, false, {finalscore: this.score});
+			game.state.start('Menu');
+			//location.reload();
     }
 };
 
@@ -310,7 +309,7 @@ Play.prototype = {
 		room.add(backlayer);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
-		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
+		exit.onDown.add(function() {game.state.start('Menu');}, this, 0, true);
 		this.leftBound = 0;
 		this.rightBound = game.width;
 		vignette = game.add.sprite(600,500,'vignette');
