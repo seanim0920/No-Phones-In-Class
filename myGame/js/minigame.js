@@ -437,7 +437,7 @@ Minigame.prototype.checkText = function() {
                     }
                     if (!this.wrong.isPlaying) //play one sound at a time
                         this.wrong.play();
-                    this.wrongCallback(100);
+                    this.wrongCallback(250);
                 }
                 else //correct text message response input
                     this.tock.play();
@@ -510,7 +510,7 @@ Minigame.prototype.checkResponseText = function(){
             this.responseFake2.setText("");
             this.responseDisplay1.setText("");
             this.responseDisplay2.setText("");
-            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(4,8); //mom response time
+            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(2,3); //mom response time
             this.text_send.play();
             this.finishText();
         }
@@ -530,7 +530,7 @@ Minigame.prototype.checkResponseText = function(){
             this.responseFake.setText("");
             this.responseDisplay1.setText("");
             this.responseDisplay2.setText("");
-            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(4,8); //mom response time
+            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(2,3); //mom response time
             this.text_send.play();
             this.finishText();
         }
@@ -573,7 +573,7 @@ Minigame.prototype.finishText = function() {
             this.newMessage = true;
             this.leftonRead = game.time.create(false);
             //scroll down animation
-            this.leftonRead.add(Phaser.Timer.SECOND*15, function()
+            this.leftonRead.add(Phaser.Timer.SECOND*12, function()
             { 
                 this.incoming_response = true;
                 this.wrong.play();
@@ -610,7 +610,7 @@ Minigame.prototype.finishText = function() {
                 this.leftonRead.loop(Phaser.Timer.SECOND*2,
                 function(){
                     this.wrong.play();
-                    this.wrongCallback(250);
+                    this.wrongCallback(100);
                 },this);
             }, this);
             this.leftonRead.start();

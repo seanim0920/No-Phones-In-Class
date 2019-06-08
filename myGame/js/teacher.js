@@ -29,7 +29,6 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	//adjust this when debugging
 	this.WAIT_UNTIL_START = 1;
 	
-	this.stopMoving = true;
 	this.originalY = game.world.height - 100;
 	this.originalX = game.world.centerX;
 	this.startDelay = 10;
@@ -39,7 +38,6 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.suspicionMax = 1000;
 	this.coming = false; //teacher is currently hunting you
 	this.cooldown = true; //alert cooldown phase
-	this.cooldown_amount = 3;
 	//refer to the constructor for the sprite object in Phaser
 	this.creepy = game.add.audio('music');
 	this.breathing = game.add.audio('breathing');
@@ -56,8 +54,8 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.returnright = game.add.video('returnright');
 	this.returnright.volume = 0;
 	this.returnleft = game.add.video('returnleft');
-	this.returnleft.volume = 0;
 	this.drop = game.add.video('drop');
+	this.returnleft.volume = 0;
 	this.peekleft = game.add.video('peekleft');
 	this.peekleft.volume = 0;
 	this.peekright = game.add.video('peekright');
@@ -69,7 +67,7 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.appear = game.add.video('appear');
 	this.idleAnim = game.add.video('draw');
 	this.idleAnimOverlap = game.add.video('drawOverlap');
-	this.disappear = game.add.audio('whoosh');
+	this.disappear = game.add.audio('bell');
 	this.music.play('', 0, 1, true);
 	Phaser.Sprite.call(this, game, this.originalX, this.originalY, "", 1, 1);	
 	this.caughtCallback = function(){};
@@ -78,12 +76,6 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.distance = 100;
 	this.frontlayer = frontlayer;
 	this.backlayer = backlayer;
-	this.x = 0;
-	this.alertMeter = game.time.create(false);
-	this.scale.setTo(0.4);
-	this.anchor.setTo(0.5, 1);
-
-	this.start();
 	this.phonelayer = phonelayer;
 
 	this.peekleft.onComplete.add(function() {
@@ -101,34 +93,9 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	
 	this.alertMeter = game.time.create(false);
 
-	chooseRandomIdle = function() {	
-		let num = game.rnd.integerInRange(0,8);
-		if (num < 2) {
-			this.idleAnim.stop();
-			if (!this.stopMoving) {
-				this.loadTexture(this.stretching);
-			}
-			this.stretching.play();
-			this.stretching.onComplete.addOnce(function() {
-				this.loadTexture(this.idleAnim);
-				this.idleAnim.play();
-			}, this);
-		} else if (num == 3) {
-			this.idleAnim.stop();
-			if (!this.stopMoving) {
-				this.loadTexture(this.stretching2);
-			}
-			this.stretching2.play();
-			this.stretching2.onComplete.addOnce(function() {
-				this.loadTexture(this.idleAnim);
-				this.idleAnim.play();
-			}, this);
-		}
-	}
+	this.neutralStance();
+
 	
-	this.idleAnim.onComplete.add(
-		chooseRandomIdle, this
-	);
 	
 	// switchIdle = function(flag) {
 	// 	if (flag) {
@@ -171,26 +138,11 @@ Teacher.prototype.init_vignette = function(vignette, frame)
 	this.vignetteFrame = frame;
 };
 
-Teacher.prototype.start = function() {
-	this.walkright.play(true);
-	this.loadTexture(this.walkright);
-	this.returnright.onComplete.addOnce(function()
-	{
-		this.stopMoving = false;
-		this.neutralStance();
-	},this);
-	var check = game.time.events.loop(0, function () {
-		//console.log("predicted position is " + this.x + speed);
-		if (this.x > game.width/2) {
-			game.time.events.remove(check);
-			this.returnright.play();
-			this.loadTexture(this.returnright);
-			//this.walkright.stop();
-		}
-		this.x += 3;
-	}, this);
-};
-
+Teacher.prototype.screen_fadeTo = function(_alpha)
+{
+	game.add.tween(this.vignetteFrame).to({alpha: _alpha},Phaser.Timer.SECOND,Phaser.Easing.Circular.Out, true);
+	game.add.tween(this.vignette).to({alpha: _alpha},Phaser.Timer.SECOND,Phaser.Easing.Circular.Out, true);
+}
 
 Teacher.prototype.attack = function() {
 	if (!this.coming) {
@@ -207,14 +159,12 @@ Teacher.prototype.attack = function() {
 		this.loadTexture(this.drop);
 		this.drop.play();
 		this.drop.onComplete.addOnce(function(){
-			this.alpha = 0;
 			this.creepy.play();
 			var move = game.rnd.integerInRange(0, 6);
 			if (move < 3) {
 				this.frontlayer.add(this);
 				this.x = game.rnd.realInRange(500, game.world.width - 500);
 				game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
-					this.alpha = 1;
 					this.scale.setTo(0.8);
 					this.y = game.world.height;
 					this.loadTexture(this.appear);	
@@ -232,7 +182,6 @@ Teacher.prototype.attack = function() {
 			} else if (move == 5) {
 				this.x = game.world.centerX;
 				game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
-					this.alpha = 1;
 					this.breathing.play();
 					firstx = game.input.x;
 					firsty = game.input.y;
@@ -248,7 +197,7 @@ Teacher.prototype.attack = function() {
 						var dx = game.input.x - firstx;
 						var dy = game.input.y - firsty;
 	
-						if (Math.sqrt(dx * dx + dy * dy) >= 200) {	
+						if (Math.sqrt(dx * dx + dy * dy) >= 250) {	
 							this.appear.play();	
 							this.appear.onComplete.addOnce(function() {
 								game.state.start('End', true, false, {finalscore: 0});
@@ -264,7 +213,6 @@ Teacher.prototype.attack = function() {
 			else {
 				this.phonelayer.add(this);
 				game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
-					this.alpha = 1;
 					this.y = 600;
 					this.x = 200;
 					this.scale.setTo(0.7);
@@ -299,7 +247,6 @@ Teacher.prototype.attack = function() {
 };
 
 Teacher.prototype.sideEye = function() {
-	game.world.add(this);
 	this.stopMoving = true;
 	tween = game.add.tween(this).to( { y: 1800 }, 600, Phaser.Easing.Circular.Out, true);
 	tween.onComplete.addOnce(function () {
@@ -380,11 +327,7 @@ Teacher.prototype.move = function(goRight) {
 }
 };
 
-
-
 Teacher.prototype.vignette_setTo = function(_alpha) {
-	if (_alpha < 0)
-		_alpha = 0;
 	this.vignetteFrame.alpha = _alpha;
 	this.vignette.alpha = _alpha;
 }
@@ -396,16 +339,19 @@ Teacher.prototype.update = function()
 	if (this.cooldown)
 	{
 		if (this.suspicion > 0)
-			this.suspicion -= this.cooldown_amount;
+			this.suspicion-= 3;
+		else
+			this.suspicion = 0;
 	}
 }
 
 Teacher.prototype.raiseAlert = function(amount) {
+	console.log("suspicion is " + this.suspicion);
+	this.suspicion += amount;
+	this.cooldown = false;
 	this.alertMeter.stop();
 	if (!this.coming)
 	{
-		this.suspicion += amount;
-		this.cooldown = false;
 		this.alertMeter.add(Phaser.Timer.SECOND*3,function() {this.cooldown = true;},this);
 		this.alertMeter.start();
 	}
@@ -421,18 +367,15 @@ Teacher.prototype.raiseAlert = function(amount) {
 Teacher.prototype.turn = function(peekRight) {
   if (!this.stopMoving) {
     this.stopMoving = true;
-    var turnAnim = this.peek;
-    if (peekRight)
-    {
-    	this.scale.x = -0.4;
-    	this.anchor.x = 0.4;
-    }
-    var peekStart = 1.5;
+	var peekAnim = this.peekleft;
+	if (peekRight) {
+		peekAnim = this.peekright;
+	}
+    var peekStart = 2;
     var peekDuration = 1;
     this.music.pause();
-    this.loadTexture(turnAnim);
-    turnAnim.play();
-	turnAnim.onComplete.addOnce(function() {if (!this.coming) this.neutralStance()},this);
+    this.loadTexture(peekAnim);
+    peekAnim.play();
     game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
       function () {
         var check = game.time.events.loop(0, () => {
@@ -450,7 +393,7 @@ Teacher.prototype.turn = function(peekRight) {
 
 Teacher.prototype.checkIfVisible = function(peekRight) {
 	//console.log('peeking direction? ' + peekRight);
-	if ((peekRight && game.input.x > this.x + this.safe_zone) || (!peekRight && game.input.x < this.x - this.safe_zone)) {
+	if ((peekRight && game.input.x > this.x + 100) || (!peekRight && game.input.x < this.x - 100)) {
 		return true;
 	}
 };
@@ -459,7 +402,8 @@ Teacher.prototype.setCallbackWhenCaught = function(callback) {
 	this.caughtCallback = callback;
 };
 
-Teacher.prototype.neutralStance = function() {	
+Teacher.prototype.neutralStance = function() {
+	this.stopMoving = false;
 	this.anchor.setTo(0.5,1);
 	this.scale.setTo(0.4);
 	this.y = this.originalY;
@@ -469,8 +413,8 @@ Teacher.prototype.neutralStance = function() {
 	this.idleAnim.play(true);
 
 	var delay = game.rnd.realInRange(this.startDelay, this.endDelay);
-	var move = game.rnd.integerInRange(0, 4);
-	var checkIfOpen = game.time.events.loop(Phaser.Timer.SECOND * (delay), function () {
+	var move = game.rnd.integerInRange(0, 6);
+	var checkIfOpen = game.time.events.add(Phaser.Timer.SECOND * (delay), function () {
 		if (!this.stopMoving) {
 			var right = 0;
 			var left = 1;
@@ -479,15 +423,45 @@ Teacher.prototype.neutralStance = function() {
 			//this.idleAnimOverlap.paused = true;
 			game.time.events.remove(checkIfOpen);
 			if (move < 4) {
-				this.turn(direction);
+				this.turn(direction == right);
 			}
-			else {
+			else if (move != 4)
+			{
 				var direction = right;
 				if (this.x >= game.world.centerX) {
 					direction = left;
 				}
-				this.move(direction);
+				this.move(direction == right);
 			}
+			else //stretch break
+				this.chooseRandomIdle();
 		}
 	}, this);
 };
+
+Teacher.prototype.chooseRandomIdle = function() {	
+		let num = game.rnd.integerInRange(0,1);
+		if (num == 0) {
+			this.idleAnim.stop();
+			if (!this.stopMoving) {
+				this.loadTexture(this.stretching);
+			}
+			this.stretching.play();
+			this.stretching.onComplete.addOnce(function() 
+			{
+				if (!this.coming)
+					this.neutralStance();
+			}, this);
+		} else{
+			this.idleAnim.stop();
+			if (!this.stopMoving) {
+				this.loadTexture(this.stretching2);
+			}
+			this.stretching2.play();
+			this.stretching2.onComplete.addOnce(function()
+			{
+				if (!this.coming)
+					this.neutralStance();
+			}, this);
+		}
+	};
