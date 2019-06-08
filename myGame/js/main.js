@@ -14,11 +14,12 @@ Loading.prototype = {
 		game.load.image('phone', 'assets/img/phone.png');
 		game.load.image('loading', 'assets/img/loading.png');
 		game.load.image('vignette','assets/img/vignette.png');
-		game.load.image('legs', 'assets/img/classroom.jpg');
+		game.load.image('background', 'assets/img/background.png');
 		game.load.video('end', 'assets/video/gameend.webm');
 		game.load.image('student', 'assets/img/student.png');
 		game.load.image('safearea', 'assets/img/safe.png');
 		game.load.image('watchSprite', 'assets/img/watch.png');
+		game.load.image('foreground', 'assets/img/chairs.png');
 		TeacherPreload(game);
 		MinigamePreload(game);
 		game.add.plugin(PhaserInput.Plugin);
@@ -185,6 +186,19 @@ Play.prototype = {
 		});
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
+		
+		backlayer = game.add.group();
+    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
+		watchSprite.scale.setTo(.7);
+		this.bigBoyWatch = this.game.add.graphics(70,622);
+	    this.watchTimer = this.game.time.create(false);
+	    this.watchTimer.loop(20, this.updateWatch, this);
+	    this.watchTimer.start();
+	    this.counter = 10;
+	    this.counterMax = 10;
+	
+	    googleTimer = this.game.time.create(false);
+		googleTimer.start();
 		game.world.add(minigame);
 		
 		//make everything in the group invisible except for a small section, which will be the size of the phone
@@ -196,8 +210,8 @@ Play.prototype = {
 		minigame.mask = screen;
 		
 		//room.create(0, 0, 'legs');
-		bg = room.create(0,0, 'legs');
-		bg.scale.setTo(3);
+		bg = room.create(0,-200, 'background');
+		bg.scale.setTo(0.9);
 
 	    minigame.setCorrectTextInputCallback(function() {
 			googleTimer.destroy();//reset google Timer
@@ -212,7 +226,7 @@ Play.prototype = {
 
 		this.erase = game.add.audio('erase');
 
-		teacher = new Teacher(game, game.world.centerX, game.world.height + 350);
+		teacher = new Teacher(game, game.world.centerX, game.world.height + 0);
 		room.add(teacher);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
@@ -235,6 +249,7 @@ Play.prototype = {
 		teacher.init_vignette(vignette,shadow);
 
 		messages = game.add.group();
+		/*
 		students = game.add.group();
 		for (i = 0; i < 3; i++) {
 			let student = game.add.sprite(200 + game.rnd.integerInRange(-100,100) + 700*i, game.world.height, 'student');
@@ -249,29 +264,14 @@ Play.prototype = {
 			var i = game.rnd.integerInRange(0,2); 			
 
 			messages.add(new TextMessage(game, students.getChildAt(i).x, students.getChildAt(i).y-200, game.rnd.realInRange(-.7,.7),  game.rnd.realInRange(0,-5.9)));
-		},this);
-		
-		frontlayer = game.add.group();
-		backlayer = game.add.group();
-    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
-		watchSprite.scale.setTo(.7);
-		frontlayer.add(watchSprite);
+		},this);*/
 
 		backlayer.add(teacher);
+		fg = backlayer.create(0,600, 'foreground');
 		room.add(backlayer);
-		room.add(messages);
-		room.add(students);
-		this.bigBoyWatch = this.game.add.graphics(70,622);
-	    this.watchTimer = this.game.time.create(false);
-	    this.watchTimer.loop(20, this.updateWatch, this);
-	    this.watchTimer.start();
-	    this.counter = 10;
-	    this.counterMax = 10;
-	
-	    googleTimer = this.game.time.create(false);
-		googleTimer.start();
-		
-		frontlayer.add(this.bigBoyWatch);
+		//room.add(messages);
+		//room.add(students);
+		frontlayer = game.add.group();
     },
 
 	setPhone: function() {
@@ -298,7 +298,7 @@ Play.prototype = {
 			teacher.setPlayerVisibility(false);
 		}
 		//scroll down
-		else if (game.input.y > 700 && bg.y >= bg.height - 50) {
+		else if (game.input.y > 700) {
 			this.bottom = true;
 			teacher.setPlayerVisibility(true);
 		}

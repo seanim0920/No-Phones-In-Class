@@ -45,7 +45,7 @@ var Teacher = function(game, x, y, frontlayer, backlayer) {
 	this.music.play('', 0, 1, true);
 	Phaser.Sprite.call(this, game, x, y);	
 	this.anchor.setTo(0.5,1);
-	this.scale.setTo(1);
+	this.scale.setTo(0.5);
 	this.caught = false;
 	this.caughtCallback = function(){};
 	this.loadTexture(this.teacherAnim);
