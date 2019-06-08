@@ -3,6 +3,7 @@ TeacherPreload = function(game) {
 	game.load.audio('speech', 'assets/audio/gibberish.mp3');
 	game.load.audio('badend', 'assets/audio/badend.mp3');
 	game.load.audio('caught', 'assets/audio/caught2.mp3');
+	game.load.audio('alert', 'assets/audio/exclamation.wav');
 	game.load.audio('warn', 'assets/audio/warning.mp3');
 	game.load.video('warning', 'assets/video/warning.webm');
 	game.load.video('goleft', 'assets/video/goleft.webm');
@@ -27,6 +28,7 @@ var Teacher = function(game, x, y, frontlayer, backlayer) {
 	//refer to the constructor for the sprite object in Phaser
 	this.creepy = game.add.audio('music');
 	this.warnsound = game.add.audio('warn');
+	this.alert = game.add.audio('alert');
 	this.warnvid = game.add.video('warning');
 	this.leftpeek = game.add.video('turnleft');
 	this.rightpeek = game.add.video('turnright');
@@ -104,6 +106,18 @@ Teacher.prototype.come = function() {
 
 //have teacher hide behind one of the students
 //students come in from the sides. sometimes the teacher will leave from the sides and hide behind one of them. scare them and the teacher will come out.
+Teacher.prototype.init_vignette = function(vignette, frame)
+{
+	this.vignette = vignette;
+	this.vignetteFrame = frame;
+};
+
+Teacher.prototype.screen_fadeTo = function(_alpha)
+{
+	game.add.tween(this.vignetteFrame).to({alpha: _alpha},Phaser.Timer.SECOND,Phaser.Easing.Circular.Out, true);
+	game.add.tween(this.vignette).to({alpha: _alpha},Phaser.Timer.SECOND,Phaser.Easing.Circular.Out, true);
+}
+
 Teacher.prototype.pop = function() {
 	this.disappear.play();
 	if (!this.stopMoving) {
@@ -118,32 +132,33 @@ Teacher.prototype.pop = function() {
 	//game.add.tween(this.spawner).to( { x: '-850' }, 2000, Phaser.Easing.Circular.Out, true)
 	tween = game.add.tween(this).to( { y: 1500 }, 600, Phaser.Easing.Circular.Out, true);
 	tween.onComplete.add(function () {
-		this.frontlayer.add(this);
-		this.loadTexture('come');
-		this.scale.setTo(2);
-		this.creepy.play();
-		this.y = 2400;
-		this.x = game.rnd.realInRange(500, game.world.width - 500);
-		game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
-			this.creepy.stop();				
-			tween2 = game.add.tween(this).to( { y: game.world.height + 550 }, 450, Phaser.Easing.Circular.Out, true);
-			tween2.onComplete.add(function () {
-				if (Math.abs(game.input.x - this.x) <= 400) {
-					console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
-					game.state.start('End', true, false, {finalscore: 0});
-				} else {
-					tween3 = game.add.tween(this).to( { y: 2400 }, 700, Phaser.Easing.Circular.Out, true);
-					tween3.onComplete.add(function () {
-						this.backlayer.add(this);
-						this.scale.setTo(1.2);
-						this.loadTexture(this.teacherAnim);
-						tween4 = game.add.tween(this).to( { y: game.world.height + 150 }, 300, Phaser.Easing.Circular.Out, true);
-						tween4.onComplete.add(function () {
-							this.neutralStance();
-						}, this);
-					}, this);
-				}
-			}, this);
+	this.screen_fadeTo(0.85);
+	this.frontlayer.add(this);
+	this.loadTexture('come');
+	this.scale.setTo(2);
+	this.creepy.play();
+	this.y = 2400;
+	this.x = game.rnd.realInRange(500, game.world.width - 500);
+	game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
+		this.creepy.stop();				
+		tween2 = game.add.tween(this).to( { y: game.world.height + 550 }, 450, Phaser.Easing.Circular.Out, true);
+		tween2.onComplete.add(function () {
+			if (Math.abs(game.input.x - this.x) <= 400) {
+				console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
+				game.state.start('End', true, false, {finalscore: 0});
+			} else {
+				this.screen_fadeTo(0);
+				tween3 = game.add.tween(this).to( { y: 2200 }, 700, Phaser.Easing.Circular.Out, true);
+        tween3.onComplete.add(function () {
+          this.backlayer.add(this);
+          this.scale.setTo(1.2);
+          this.loadTexture(this.teacherAnim);
+          tween4 = game.add.tween(this).to( { y: game.world.height + 150 }, 300, Phaser.Easing.Circular.Out, true);
+          tween4.onComplete.add(function () {
+            this.neutralStance();
+          }, this);
+        }, this);
+			}
 		}, this);
 	}, this);
 	}
@@ -194,26 +209,32 @@ Teacher.prototype.move = function(goRight) {
 };
 
 Teacher.prototype.turn = function(peekRight) {
-	if (!this.stopMoving) {
-		this.stopMoving = true;
-		var turnAnim = this.rightpeek;
-		var peekStart = 0.65;
-		var peekDuration = 1;
-		this.music.pause();
-		this.loadTexture(turnAnim);
-		turnAnim.play();
-		game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
-			function () {
-				var check = game.time.events.loop(0, () => {
-					if (this.peek(peekRight)) {
-						game.time.events.remove(check);
-						this.caught = true;
-					}
-				}, this, peekRight);
-				game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
-			},
-		this);
-		turnAnim.onComplete.addOnce(this.checkIfYouLost, this);
+  if (!this.stopMoving) {
+    this.stopMoving = true;
+    var turnAnim = this.leftpeek;
+    var peekStart = 0.65;
+    var peekDuration = 1;
+    if (peekRight) {
+      turnAnim = this.rightpeek;
+      peekStart = 0.7;
+      peekDuration = 0.9;
+    }
+    this.music.pause();
+    this.loadTexture(turnAnim);
+    turnAnim.play();
+    game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
+      function () {
+        var check = game.time.events.loop(0, () => {
+          if (this.peek(peekRight)) {
+            game.time.events.remove(check);
+            this.caught = true;
+            this.alert.play();
+          }
+        }, this, peekRight);
+        game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
+      },
+    this);
+    turnAnim.onComplete.addOnce(this.checkIfYouLost, this);
 	}
 };
 

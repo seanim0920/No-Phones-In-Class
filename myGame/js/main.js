@@ -13,7 +13,8 @@ Loading.prototype = {
 		game.load.audio('intro', 'assets/audio/intro.wav');
 		game.load.image('phone', 'assets/img/phone.png');
 		game.load.image('loading', 'assets/img/loading.png');
-		game.load.image('legs', 'assets/img/back.png');
+		game.load.image('vignette','assets/img/vignette.png');
+		game.load.image('legs', 'assets/img/classroom.jpg');
 		game.load.video('end', 'assets/video/gameover.mp4');
 		game.load.image('student', 'assets/img/student.png');
 		game.load.image('safearea', 'assets/img/safe.png');
@@ -79,7 +80,6 @@ Menu.prototype = {
 				game.state.start('Play');
 			}
 		);
-		
 		next = game.input.keyboard.addKey(Phaser.Keyboard.BACKWARD_SLASH);
 		next.onDown.add(function() {game.state.start('Play')});
 	},
@@ -235,7 +235,21 @@ Play.prototype = {
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
 		this.leftBound = 0;
 		this.rightBound = game.width;
-	},
+		vignette = game.add.sprite(600,500,'vignette');
+		vignette.scale.setTo(2,2);
+		vignette.alpha = 0;
+		vignette.anchor.setTo(0.5,0.5);
+		shadow = game.add.graphics(0, 0);
+		shadow.alpha = 0;
+		shadow.anchor.setTo(0.5,0.5);
+   		shadow.beginFill(0x000);
+    	shadow.drawRect(vignette.width/2, -vignette.height/2-200, game.width, vignette.height+400);
+    	shadow.drawRect(-vignette.width/2,-vignette.height/2-200,-game.width,vignette.height+400);
+    	shadow.drawRect(-(vignette.width/2), -vignette.height/2, vignette.width, -200);
+    	shadow.drawRect(-(vignette.width/2), vignette.height/2, vignette.width, 200);
+
+    	teacher.init_vignette(vignette,shadow);
+    },
 
 	setPhone: function() {
 		//horizontal movement
@@ -243,6 +257,10 @@ Play.prototype = {
 
 		phone.x = phoneSnap - this.CURSOR_OFFSET_X; //update phone position
 		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
+		vignette.x = phone.x+261;
+		vignette.y = phone.y+355; //x:339, y: 145
+		shadow.x = vignette.x;
+		shadow.y = vignette.y;
 	},
 	scrollView: function() {
 		//scroll up
