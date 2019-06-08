@@ -193,6 +193,26 @@ Play.prototype = {
 		screen.endFill(0xffffff, 1);
 		minigame.add(screen);
 		minigame.mask = screen;
+		
+    	watchSprite = game.add.sprite(-230, 410, 'watchSprite'); //draw wrist watch
+	    watchSprite.scale.setTo(.7);
+
+		this.bigBoyWatch = this.game.add.graphics(70,622);
+	    this.watchTimer = this.game.time.create(false);
+	    this.watchTimer.loop(20, this.updateWatch, this);
+	    this.watchTimer.start();
+	    this.counter = 10;
+	    this.counterMax = 10;
+	
+	    googleTimer = this.game.time.create(false);
+	    googleTimer.start();
+
+	    minigame.setCorrectTextInputCallback(function() {
+			googleTimer.destroy();//reset google Timer
+			googleTimer = this.game.time.create(false);
+	    	googleTimer.start();
+			console.log("reset timer: " + googleTimer.seconds);
+		});
 
 		//room.create(0, 0, 'legs');
 		bg = room.create(0,0, 'legs');
@@ -257,6 +277,22 @@ Play.prototype = {
 			this.bottom = true;
 			teacher.setPlayerVisibility(true);
 		}
+	},
+	updateWatch: function() {
+	if(googleTimer.seconds > 10 && this.counter < 9.95){
+    	this.counter+=.02;//time moves backwards
+    	//console.log("backward: " + googleTimer.seconds);
+	} else if(this.counter > 0.5){
+		this.counter-=.02;//time moves forwards
+		//console.log("foreward");
+	}
+	console.log("end angle "+ this.counter);
+    this.bigBoyWatch.clear();
+    this.bigBoyWatch.lineStyle(8, 0xFFFFFF);
+    this.bigBoyWatch.beginFill(0xFFFFFF);
+    this.bigBoyWatch.arc(0, 0, 30, this.game.math.degToRad(-90), this.game.math.degToRad(-90+(360/this.counterMax)*(this.counterMax-this.counter)), true);
+    this.bigBoyWatch.endFill();
+        
 	},
 	update: function() {
 		game.canvas.style.cursor = "none";
