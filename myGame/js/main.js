@@ -181,8 +181,8 @@ Play.prototype = {
 
 		//move everything currently in the game world to a group
 		minigame = new Minigame(game);
-		minigame.setWrongTextInputCallback(function() {
-			teacher.hearNoise();
+		minigame.setWrongTextInputCallback(function(amount) {
+			teacher.raiseAlert(amount);
 		});
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
@@ -226,7 +226,7 @@ Play.prototype = {
 
 		this.erase = game.add.audio('erase');
 
-		teacher = new Teacher(game, game.world.centerX, game.world.height + 0);
+		teacher = new Teacher(game);
 		room.add(teacher);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
@@ -267,7 +267,7 @@ Play.prototype = {
 		},this);*/
 
 		backlayer.add(teacher);
-		fg = backlayer.create(0,600, 'foreground');
+		fg = backlayer.create(0,500, 'foreground');
 		room.add(backlayer);
 		//room.add(messages);
 		//room.add(students);
