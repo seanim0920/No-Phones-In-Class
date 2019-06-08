@@ -5,9 +5,7 @@ Loading.prototype = {
 		// preload images
 		game.load.audio('music', 'assets/audio/spookymusic.wav');
 		game.load.audio('jumpscare', 'assets/audio/jumpscare.ogg');
-		game.load.audio('pop', 'assets/audio/pop.ogg');
 		game.load.audio('yay', 'assets/audio/yay.mp3');
-		game.load.audio('badend', 'assets/audio/badend.mp3');
 		game.load.audio('grunt', 'assets/audio/grunt.mp3');
 		game.load.audio('caught', 'assets/audio/caught.mp3');
 		game.load.audio('erase', 'assets/audio/erase.mp3');
@@ -15,7 +13,7 @@ Loading.prototype = {
 		game.load.image('loading', 'assets/img/loading.png');
 		game.load.image('vignette','assets/img/vignette.png');
 		game.load.image('background', 'assets/img/background.png');
-		game.load.video('end', 'assets/video/gameend.webm');
+		game.load.video('end', 'assets/video/gameover.mp4');
 		game.load.image('student', 'assets/img/student.png');
 		game.load.image('safearea', 'assets/img/safe.png');
 		game.load.image('watchSprite', 'assets/img/watch.png');
@@ -226,8 +224,10 @@ Play.prototype = {
 
 		this.erase = game.add.audio('erase');
 
-		teacher = new Teacher(game);
-		room.add(teacher);
+		frontlayer = game.add.group();
+		teacher = new Teacher(game, frontlayer, backlayer);
+		backlayer.add(teacher);
+		room.add(backlayer);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
@@ -266,12 +266,9 @@ Play.prototype = {
 			messages.add(new TextMessage(game, students.getChildAt(i).x, students.getChildAt(i).y-200, game.rnd.realInRange(-.7,.7),  game.rnd.realInRange(0,-5.9)));
 		},this);*/
 
-		backlayer.add(teacher);
 		fg = backlayer.create(0,500, 'foreground');
-		room.add(backlayer);
 		//room.add(messages);
 		//room.add(students);
-		frontlayer = game.add.group();
     },
 
 	setPhone: function() {
@@ -311,7 +308,7 @@ Play.prototype = {
 			this.counter-=.02;//time moves forwards
 			//console.log("foreward");
 		}
-		console.log("end angle "+ this.counter);
+		//console.log("end angle "+ this.counter);
 		this.bigBoyWatch.clear();
 		this.bigBoyWatch.lineStyle(8, 0xFFFFFF);
 		this.bigBoyWatch.beginFill(0xFFFFFF);
@@ -329,7 +326,7 @@ Play.prototype = {
 };
 
 // global variables
-var game = new Phaser.Game(1800, 800, Phaser.AUTO, 'phaser', null, false, false);
+var game = new Phaser.Game(1800, 800, Phaser.WEBGL, 'phaser', null, false, false);
 // states for the game
 game.state.add('Boot', Loading);
 game.state.add('Menu', Menu);
