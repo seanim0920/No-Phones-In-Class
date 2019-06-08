@@ -11,13 +11,14 @@ TeacherPreload = function(game) {
 	game.load.video('goright', 'assets/video/goright.webm');
 	game.load.video('goback', 'assets/video/goback.webm');
 	game.load.video('turnleft', 'assets/video/turnleft.webm');
-	game.load.video('turnright', 'assets/video/turnright.webm');
+	game.load.video('turnright', 'assets/video/turn.webm');
 	game.load.video('draw', 'assets/video/drawing.webm');
 	game.load.image('come', 'assets/img/coming.png');
+	game.load.audio('pop', 'assets/audio/whoosh.mp3');
 }
 
 //constructor for teacher
-var Teacher = function(game, x, y) {
+var Teacher = function(game, x, y, frontlayer, backlayer) {
 	this.WAIT_UNTIL_START = 10;
 
 	this.startDelay = 10;
@@ -41,7 +42,7 @@ var Teacher = function(game, x, y) {
 	this.music.play('', 0, 1, true);
 	Phaser.Sprite.call(this, game, x, y);	
 	this.anchor.setTo(0.5,1);
-	this.scale.setTo(1.2);
+	this.scale.setTo(1);
 	this.caught = false;
 	this.caughtCallback = function(){};
 	this.loadTexture(this.teacherAnim);
@@ -50,6 +51,10 @@ var Teacher = function(game, x, y) {
 	this.speed = 1;
 	this.distance = 100;
 	this.lost = false;
+	this.hidden = false;
+	this.frontlayer = frontlayer;
+	this.backlayer = backlayer;
+	this.originalY = y;
 
 	game.time.events.add(Phaser.Timer.SECOND * (this.WAIT_UNTIL_START), this.turn, this, true);
 };
@@ -63,33 +68,41 @@ Teacher.prototype.canSeeCursor = function(visible) {
 	this.see = visible;
 };
 
-//trigger when mouse covers teacher for too long
 Teacher.prototype.come = function() {
-	// this.stopMoving = true;
-	// //mutate first to fit the format of the other clips
-	// //this.scale.setTo(1);
-	// this.y -= 80;
-	// this.scale.setTo(0.9);
-
-	// this.music.pause();
-	// this.loadTexture('come');
-	// var check = game.time.events.loop(0, function () {
-	// 	if (this.distance <= 0) {
-	// 		game.time.events.remove(check);
-	// 		if (Math.abs(game.input.x - this.x) <= 40)
-	// 			game.state.start('End', true, false, {finalscore: this.score});
-	// 	}
-	// 	this.y += 12;
-	// 	this.distance -= 1;
-	// 	this.scale.setTo(0.9 + (100-this.distance)/40);
-	// 	if (this.x < game.input.x) {
-	// 		this.x += 1;
-	// 	} else {
-	// 		this.x -= 1;
-	// 	}
-	// }, this);
-	// this.stopMoving = false;
-};
+	game.time.events.removeAll();
+	this.neutralStance();
+	this.stopMoving = true;
+	//mutate first to fit the format of the other clips
+	//this.scale.setTo(1);
+	this.music.pause();
+	this.loadTexture('come');
+	var check = game.time.events.loop(0, function () {
+		if (this.distance <= 0) {
+			game.time.events.remove(check);
+			if (Math.abs(game.input.x - this.x) <= 40) {
+				var wait = game.time.events.loop(0, function () {
+					if (!this.hidden) {
+						game.time.events.remove(wait);
+						if (Math.abs(this.x - game.input.x) < 300)
+							game.state.start('End', true, false, {finalscore: this.score});
+					}
+				});
+			}
+		}
+		this.y += 12;
+		this.distance -= 1;
+		this.scale.setTo(0.9 + (100-this.distance)/40);
+		if (this.x < game.input.x) {
+			this.x += 1;
+		} else {
+			this.x -= 1;
+		}
+		if (!this.bottom) {
+			game.time.events.remove(check);
+		}
+	}, this);
+	this.stopMoving = false;
+}
 
 //have teacher hide behind one of the students
 //students come in from the sides. sometimes the teacher will leave from the sides and hide behind one of them. scare them and the teacher will come out.
@@ -119,32 +132,33 @@ Teacher.prototype.pop = function() {
 	//game.add.tween(this.spawner).to( { x: '-850' }, 2000, Phaser.Easing.Circular.Out, true)
 	tween = game.add.tween(this).to( { y: 1500 }, 600, Phaser.Easing.Circular.Out, true);
 	tween.onComplete.add(function () {
-		this.screen_fadeTo(0.85);
-		this.loadTexture('come');
-		this.scale.setTo(2);
-		this.creepy.play();
-		this.y = 2200;
-		this.x = game.rnd.realInRange(500, game.world.width - 500);
-		game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
-			this.creepy.stop();				
-			tween2 = game.add.tween(this).to( { y: game.world.height + 550 }, 450, Phaser.Easing.Circular.Out, true);
-			tween2.onComplete.add(function () {
-				if (Math.abs(game.input.x - this.x) >= 200) {
-					console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
-					game.state.start('End', true, false, {finalscore: 0});
-				} else {
-					this.screen_fadeTo(0);
-					tween3 = game.add.tween(this).to( { y: 2200 }, 700, Phaser.Easing.Circular.Out, true);
-					tween3.onComplete.add(function () {
-						this.scale.setTo(1.2);
-						this.loadTexture(this.teacherAnim);
-						tween4 = game.add.tween(this).to( { y: game.world.height + 150 }, 300, Phaser.Easing.Circular.Out, true);
-						tween4.onComplete.add(function () {
-							this.neutralStance();
-						}, this);
-					}, this);
-				}
-			}, this);
+	this.screen_fadeTo(0.85);
+	this.frontlayer.add(this);
+	this.loadTexture('come');
+	this.scale.setTo(2);
+	this.creepy.play();
+	this.y = 2400;
+	this.x = game.rnd.realInRange(500, game.world.width - 500);
+	game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
+		this.creepy.stop();				
+		tween2 = game.add.tween(this).to( { y: game.world.height + 550 }, 450, Phaser.Easing.Circular.Out, true);
+		tween2.onComplete.add(function () {
+			if (Math.abs(game.input.x - this.x) <= 400) {
+				console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
+				game.state.start('End', true, false, {finalscore: 0});
+			} else {
+				this.screen_fadeTo(0);
+				tween3 = game.add.tween(this).to( { y: 2200 }, 700, Phaser.Easing.Circular.Out, true);
+        tween3.onComplete.add(function () {
+          this.backlayer.add(this);
+          this.scale.setTo(1.2);
+          this.loadTexture(this.teacherAnim);
+          tween4 = game.add.tween(this).to( { y: game.world.height + 150 }, 300, Phaser.Easing.Circular.Out, true);
+          tween4.onComplete.add(function () {
+            this.neutralStance();
+          }, this);
+        }, this);
+			}
 		}, this);
 	}, this);
 	}
@@ -195,32 +209,32 @@ Teacher.prototype.move = function(goRight) {
 };
 
 Teacher.prototype.turn = function(peekRight) {
-	if (!this.stopMoving) {
-	this.stopMoving = true;
-	var turnAnim = this.leftpeek;
-	var peekStart = 0.65;
-	var peekDuration = 1;
-	if (peekRight) {
-		turnAnim = this.rightpeek;
-		peekStart = 0.7;
-		peekDuration = 0.9;
-	}
-	this.music.pause();
-	this.loadTexture(turnAnim);
-	turnAnim.play();
-	game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
-		function () {
-			var check = game.time.events.loop(0, () => {
-				if (this.peek(peekRight)) {
-					game.time.events.remove(check);
-					this.caught = true;
-					this.alert.play();
-				}
-			}, this, peekRight);
-			game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
-		},
-	this);
-	turnAnim.onComplete.addOnce(this.checkIfYouLost, this);
+  if (!this.stopMoving) {
+    this.stopMoving = true;
+    var turnAnim = this.leftpeek;
+    var peekStart = 0.65;
+    var peekDuration = 1;
+    if (peekRight) {
+      turnAnim = this.rightpeek;
+      peekStart = 0.7;
+      peekDuration = 0.9;
+    }
+    this.music.pause();
+    this.loadTexture(turnAnim);
+    turnAnim.play();
+    game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
+      function () {
+        var check = game.time.events.loop(0, () => {
+          if (this.peek(peekRight)) {
+            game.time.events.remove(check);
+            this.caught = true;
+            this.alert.play();
+          }
+        }, this, peekRight);
+        game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
+      },
+    this);
+    turnAnim.onComplete.addOnce(this.checkIfYouLost, this);
 	}
 };
 
@@ -248,6 +262,13 @@ Teacher.prototype.setCallbackWhenCaught = function(callback) {
 };
 
 Teacher.prototype.neutralStance = function() {
+	this.y = this.originalY;
+	this.scale.setTo(1.2);
+	this.music.resume();
+	this.idle();
+};
+
+Teacher.prototype.idle = function() {
 	this.stopMoving = false;
 	console.log('neutral mode');
 	this.caught = false;
@@ -262,6 +283,18 @@ Teacher.prototype.neutralStance = function() {
 	minigame.alpha = 1;
 	this.scale.setTo(1.2);
 	this.music.resume();
+	this.idle();
+};
+
+Teacher.prototype.idle = function() {
+	this.stopMoving = false;
+	this.caught = false;
+	if (this.startDelay > 3) {
+		this.startDelay -= Math.random()/6;
+	}
+	if (this.endDelay > 7) {
+		this.endDelay -= Math.random()/6;
+	}
 	this.loadTexture(this.teacherAnim);
 	var delay = game.rnd.realInRange(this.startDelay, this.endDelay);
 	var right = 0;
@@ -269,7 +302,10 @@ Teacher.prototype.neutralStance = function() {
 	var move = game.rnd.integerInRange(0, 4);
 	var direction = game.rnd.integerInRange(right, left);
 	game.time.events.add(Phaser.Timer.SECOND * (delay), function () {
-		if (!this.stopMoving) {
+		if (this.hidden) {
+			this.come();
+		}
+		else if (!this.stopMoving) {
 			if (move < 4) {
 				this.turn(direction == right);
 			}
@@ -282,18 +318,14 @@ Teacher.prototype.neutralStance = function() {
 			}
 		}
 	}, this);
-};
+}
 
 Teacher.prototype.hearNoise = function() {
 	if (!this.stopMoving) {
-		/*
-		if (game.input.x > this.x) {
-			this.turn(true);
-		}
-		else {
-			this.turn(false);
-		}*/
-	//this.y = game.world.height + 150;
 		this.pop();
 	}
 };
+
+Teacher.prototype.setHidden = function(bool) {
+	this.hidden = bool;
+}
