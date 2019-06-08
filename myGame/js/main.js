@@ -267,12 +267,12 @@ Play.prototype = {
 		if (game.input.y < 200) {
 			//go down
 			this.bottom = false;
-			teacher.setHidden(false);
+			teacher.setPlayerVisibility(false);
 		}
 		//scroll down
 		else if (game.input.y > 700) {
 			this.bottom = true;
-			teacher.setHidden(true);
+			teacher.setPlayerVisibility(true);
 		}
 	},
 	update: function() {
