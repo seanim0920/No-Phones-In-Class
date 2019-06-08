@@ -3,21 +3,23 @@ var Loading = function(game) {};
 Loading.prototype = {
 	preload: function() {
 		// preload images
-		TeacherPreload(game);
-		MinigamePreload(game);
 		game.load.audio('music', 'assets/audio/spookymusic.wav');
 		game.load.audio('jumpscare', 'assets/audio/jumpscare.ogg');
+		game.load.audio('pop', 'assets/audio/pop.ogg');
 		game.load.audio('yay', 'assets/audio/yay.mp3');
+		game.load.audio('badend', 'assets/audio/badend.mp3');
 		game.load.audio('grunt', 'assets/audio/grunt.mp3');
+		game.load.audio('caught', 'assets/audio/caught.mp3');
 		game.load.audio('erase', 'assets/audio/erase.mp3');
-		game.load.audio('intro', 'assets/audio/intro.wav');
 		game.load.image('phone', 'assets/img/phone.png');
 		game.load.image('loading', 'assets/img/loading.png');
 		game.load.image('vignette','assets/img/vignette.png');
 		game.load.image('legs', 'assets/img/classroom.jpg');
-		game.load.video('end', 'assets/video/gameover.mp4');
+		game.load.video('end', 'assets/video/gameend.webm');
 		game.load.image('student', 'assets/img/student.png');
 		game.load.image('safearea', 'assets/img/safe.png');
+		TeacherPreload(game);
+		MinigamePreload(game);
 		game.add.plugin(PhaserInput.Plugin);
 		game.load.onLoadComplete.add(function() {
 			game.state.start('Menu');
@@ -47,9 +49,7 @@ var Menu = function(game) {
 	this.MINIGAME_OFFSET_Y = 80;
 };
 Menu.prototype = {
-	create: function() {
-		music = game.add.audio('intro');
-		music.play();
+	create: function() {		
 		var room = new Phaser.Group(game);
 		//this.legs = new Phaser.Group(game);
 
@@ -67,7 +67,7 @@ Menu.prototype = {
 		room.add(this.instructions);
 
 		//make everything in the group invisible except for a small section, which will be the size of the phone
-		var screen = game.add.graphics(0,0);
+		var screen = this.game.add.graphics(0,0);
 		screen.beginFill(0xffffff, 1);
 		screen.drawRect(0, 0, this.PHONE_WIDTH, this.PHONE_HEIGHT);
 		screen.endFill(0xffffff, 1);
@@ -80,8 +80,9 @@ Menu.prototype = {
 				game.state.start('Play');
 			}
 		);
-		next = game.input.keyboard.addKey(Phaser.Keyboard.BACKWARD_SLASH);
-		next.onDown.add(function() {game.state.start('Play')});
+		
+		left = game.input.keyboard.addKey(Phaser.Keyboard.BACKWARD_SLASH);
+		left.onDown.add(function() {game.state.start('Play')});
 	},
 	update: function() {
 		game.canvas.style.cursor = "none";
@@ -109,7 +110,7 @@ End.prototype = {
 		this.jumpscare.play();
 		death = game.add.video('end');
 		death.play();
-		death.addToWorld(game.world.centerX,0,0.5,0,1,1);
+		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
 		death.onComplete.addOnce(function () {
 			music.stop();
 			game.state.start('Menu', true, false, {finalscore: this.score});
@@ -170,31 +171,33 @@ var Play = function(game) {
 	//DONT TOUCH
 	this.MINIGAME_OFFSET_X = 90;
 	this.MINIGAME_OFFSET_Y = 80;
-
-	this.bottom = false;
 };
 Play.prototype = {
 	create: function() {
-		room = new Phaser.Group(game);
+		var room = new Phaser.Group(game);
 		//this.legs = new Phaser.Group(game);
 
 		//move everything currently in the game world to a group
 		minigame = new Minigame(game);
-		minigame.setRoom(room);
+		minigame.setWrongTextInputCallback(function() {
+			teacher.hearNoise();
+		});
 		game.world.moveAll(minigame, true);
 		game.world.add(room);
 		game.world.add(minigame);
 		
 		//make everything in the group invisible except for a small section, which will be the size of the phone
-		var screen = game.add.graphics(0,0);
+		var screen = this.game.add.graphics(0,0);
 		screen.beginFill(0xffffff, 1);
 		screen.drawRect(0, 0, this.PHONE_WIDTH, this.PHONE_HEIGHT);
 		screen.endFill(0xffffff, 1);
 		minigame.add(screen);
 		minigame.mask = screen;
 
+		//room.create(0, 0, 'legs');
 		bg = room.create(0,0, 'legs');
 		bg.scale.setTo(3);
+		
 
 		phone = game.add.sprite(0, 0, 'phone');
 		phone.x = game.input.x - this.CURSOR_OFFSET_X; //update phone position
@@ -202,34 +205,9 @@ Play.prototype = {
 
 		this.erase = game.add.audio('erase');
 
-		frontlayer = game.add.group();
-		backlayer = game.add.group();
-		teacher = new Teacher(game, game.world.centerX, game.world.height + 250, frontlayer, backlayer);
-		
-		backlayer.add(teacher);
-		room.add(backlayer);
+		teacher = new Teacher(game, game.world.centerX, game.world.height + 150);
+		room.add(teacher);
 
-		messages = game.add.group();
-		students = game.add.group();
-		for (i = 0; i < 3; i++) {
-			let student = game.add.sprite(200 + game.rnd.integerInRange(-100,100) + 700*i, game.world.height + game.rnd.integerInRange(-20,20), 'student');
-			rscale = game.rnd.realInRange(-0.3,0.3);
-			student.scale.setTo(0.5,0.5);
-			student.anchor.setTo(0.5,1);
-			
-			students.add(student);
-		}
-
-		game.time.events.loop(Phaser.Timer.SECOND * game.rnd.realInRange(1.00,3.00), function() {
-			var i = game.rnd.integerInRange(0,2); 			
-
-			messages.add(new TextMessage(game, students.getChildAt(i).x, students.getChildAt(i).y-200, game.rnd.realInRange(-.7,.7),  game.rnd.realInRange(0,-5.9)));
-		},this);
-
-		room.add(messages);
-		room.add(students);
-		
-		room.add(frontlayer);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
 		exit.onDown.add(function() {game.state.start('Menu', true, false, {finalscore: this.score});}, this, 0, true);
@@ -255,6 +233,11 @@ Play.prototype = {
 		//horizontal movement
 		var phoneSnap = game.input.x //get cursor position
 
+		if (phoneSnap > this.rightBound) //cursor is out of right bound
+			phoneSnap = this.rightBound;
+		else if (phoneSnap < this.leftBound) //cursor out of left bound
+			phoneSnap = this.leftBound;
+
 		phone.x = phoneSnap - this.CURSOR_OFFSET_X; //update phone position
 		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
 		vignette.x = phone.x+261;
@@ -264,15 +247,31 @@ Play.prototype = {
 	},
 	scrollView: function() {
 		//scroll up
-		if (game.input.y < 200) {
+		if (game.input.y < 200 && bg.y <= -50) {
 			//go down
-			this.bottom = false;
-			teacher.setHidden(false);
+			bg.y += 50;
+			teacher.y += 50;
+			this.leftBound -= 22; //expand bounds
+			this.rightBound += 22;
+
 		}
 		//scroll down
-		else if (game.input.y > 700) {
-			this.bottom = true;
-			teacher.setHidden(true);
+		else if (game.input.y > 600 && bg.y - 800 >= -bg.height/1.2) {
+			//go up
+			bg.y -= 50;
+			teacher.y -= 50;
+			this.leftBound += 22; //shrink bounds
+			this.rightBound -= 22;
+		}
+		if (this.leftBound > this.rightBound) //bounds are overlapping
+		{
+			this.leftBound = game.width/2; //set to center
+			this.rightBound = this.leftBound;
+		}
+		else if(this.leftBound < 0) //bounds are out of screen
+		{
+			this.leftBound = 0; //reset to default
+			this.rightBound = game.width;
 		}
 	},
 	update: function() {
@@ -281,18 +280,11 @@ Play.prototype = {
 		this.setPhone();
 		minigame.x = phone.x -phone.offsetX + this.MINIGAME_OFFSET_X;
 		minigame.y = phone.y -phone.offsetY + this.MINIGAME_OFFSET_Y;
-		if (this.bottom && room.y - 800 >= -room.height/1.2) {
-			//go up
-			room.y -= 150;
-		}
-		else if (!this.bottom && room.y <= -50) {
-			room.y += 150;
-		}
 	}
 };
 
 // global variables
-var game = new Phaser.Game(1800, 1000, Phaser.AUTO, 'phaser', null, false, false);
+var game = new Phaser.Game(1800, 800, Phaser.AUTO, 'phaser', null, false, false);
 // states for the game
 game.state.add('Boot', Loading);
 game.state.add('Menu', Menu);
