@@ -22,6 +22,9 @@ TeacherPreload = function(game) {
 	game.load.video('appear', 'assets/video/pop.webm');
 	game.load.video('drop', 'assets/video/drop.webm');
 	game.load.image('come', 'assets/img/coming.png');
+	game.load.video('idleGlitch', 'assets/video/idleglitch.webm');
+	game.load.video('idleGlitchier', 'assets/video/idleglitchier.webm');
+	game.load.video('idleGlitchy', 'assets/video/idleglitchy.webm');
 }
 
 //constructor for teacher
@@ -62,6 +65,9 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.peekright.volume = 0;
 	this.stretching = game.add.video('stretching');
 	this.stretching2 = game.add.video('stretching2');
+	this.idleGlitch = game.add.video('idleGlitch');
+	this.idleGlitchy = game.add.video('idleGlitchy');
+	this.idleGlitchier = game.add.video('idleGlitchier');
 	this.check = game.add.video('check');
 	this.music = game.add.audio('speech');
 	this.appear = game.add.video('appear');
@@ -90,10 +96,16 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 			this.neutralStance();
 		}
 	}, this);
+
+	this.x = 0;
+	this.alertMeter = game.time.create(false);
+	this.scale.setTo(0.4);
+	this.anchor.setTo(0.5, 1);
+
+	this.goIn();
 	
 	this.alertMeter = game.time.create(false);
 
-	this.neutralStance();
 
 	
 	
@@ -130,6 +142,26 @@ Teacher.prototype.setPlayerVisibility = function(visible) {
 	this.canSeePlayer = visible;
 };
 
+Teacher.prototype.goIn = function() {
+	this.walkright.play(true);
+	this.loadTexture(this.walkright);
+	this.returnright.onComplete.addOnce(function()
+	{
+		this.stopMoving = false;
+		this.neutralStance();
+	},this);
+	var check = game.time.events.loop(0, function () {
+		//console.log("predicted position is " + this.x + speed);
+		if (this.x > game.width/2) {
+			game.time.events.remove(check);
+			this.returnright.play();
+			this.loadTexture(this.returnright);
+			//this.walkright.stop();
+		}
+		this.x += 3;
+	}, this);
+};
+
 //have teacher hide behind one of the students
 //students come in from the sides. sometimes the teacher will leave from the sides and hide behind one of them. scare them and the teacher will come out.
 Teacher.prototype.init_vignette = function(vignette, frame)
@@ -160,15 +192,18 @@ Teacher.prototype.attack = function() {
 		this.drop.play();
 		this.drop.onComplete.addOnce(function(){
 			this.creepy.play();
-			var move = game.rnd.integerInRange(0, 6);
-			if (move < 3) {
+			this.alpha = 0;
+			var move = game.rnd.integerInRange(0, 8);
+			console.log("attack is " + move);
+			if (move < 5) {
 				this.frontlayer.add(this);
 				this.x = game.rnd.realInRange(500, game.world.width - 500);
 				game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
 					this.scale.setTo(0.8);
 					this.y = game.world.height;
 					this.loadTexture(this.appear);	
-					this.appear.play();	
+					this.alpha = 1;
+					this.appear.play(false, 0.9);	
 					this.creepy.stop();
 					this.appear.onComplete.addOnce(function() {
 						if (Math.abs(game.input.x - this.x) <= 400) {
@@ -185,11 +220,11 @@ Teacher.prototype.attack = function() {
 					this.breathing.play();
 					firstx = game.input.x;
 					firsty = game.input.y;
+					this.y = 0;
 					game.time.events.add(Phaser.Timer.SECOND * 1.2, function() {
 						game.world.add(this);
 						this.breathing.stop();
 						this.scale.setTo(1);
-						this.y = 0;
 						this.angle = 180;
 						this.loadTexture(this.appear);
 						this.creepy.stop();
@@ -197,8 +232,9 @@ Teacher.prototype.attack = function() {
 						var dx = game.input.x - firstx;
 						var dy = game.input.y - firsty;
 	
+						this.alpha = 1;
 						if (Math.sqrt(dx * dx + dy * dy) >= 250) {	
-							this.appear.play();	
+							this.appear.play(false, 1.1);	
 							this.appear.onComplete.addOnce(function() {
 								game.state.start('End', true, false, {finalscore: 0});
 							}, this);
@@ -217,7 +253,8 @@ Teacher.prototype.attack = function() {
 					this.x = 200;
 					this.scale.setTo(0.7);
 					this.loadTexture(this.appear);
-					this.appear.play();	
+					this.alpha = 1;
+					this.appear.play(false, 0.5);	
 					this.creepy.stop();		
 					firstx = game.input.x;
 					firsty = game.input.y;
@@ -247,25 +284,31 @@ Teacher.prototype.attack = function() {
 };
 
 Teacher.prototype.sideEye = function() {
-	this.stopMoving = true;
-	tween = game.add.tween(this).to( { y: 1800 }, 600, Phaser.Easing.Circular.Out, true);
-	tween.onComplete.addOnce(function () {
-		this.scale.setTo(0.9);
-		this.x = 1400;
-		this.frontlayer.add(this);
-		this.loadTexture(this.check);
-		this.check.play();		
-		this.check.onComplete.addOnce(function() {
-			this.attackFinished();
+	if (!this.coming) {
+		this.stopMoving = true;
+		tween = game.add.tween(this).to( { y: 1400 }, 500, Phaser.Easing.Circular.Out, true);
+		tween.onComplete.addOnce(function () {
+			game.world.add(this);
+			this.y = game.world.height;
+			this.scale.setTo(0.9);
+			this.x = 1400;
+			this.frontlayer.add(this);
+			this.loadTexture(this.check);
+			this.check.play();		
+			this.check.onComplete.addOnce(function() {
+				this.attackFinished();
+			}, this);
 		}, this);
-	}, this);
+	}
 }
 
 Teacher.prototype.attackFinished = function() {
+	console.log("attacked is finished, teacher is at " + this.x + ", " + this.y);
 	this.suspicion = 0;
 	this.cooldown = true;
 	this.coming = false;
 	this.backlayer.add(this);
+	this.x = game.rnd.realInRange(500, game.world.width - 500);
 	this.neutralStance();
 	game.camera.flash(0x000000, 800);
 }
@@ -371,8 +414,8 @@ Teacher.prototype.turn = function(peekRight) {
 	if (peekRight) {
 		peekAnim = this.peekright;
 	}
-    var peekStart = 2;
-    var peekDuration = 1;
+    var peekStart = 1;
+    var peekDuration = 2;
     this.music.pause();
     this.loadTexture(peekAnim);
     peekAnim.play();
@@ -382,7 +425,6 @@ Teacher.prototype.turn = function(peekRight) {
           if (this.checkIfVisible(peekRight)) {
             game.time.events.remove(check);
 			this.alert.play();
-			this.attack();
           }
         }, this);
         game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
@@ -394,7 +436,7 @@ Teacher.prototype.turn = function(peekRight) {
 Teacher.prototype.checkIfVisible = function(peekRight) {
 	//console.log('peeking direction? ' + peekRight);
 	if ((peekRight && game.input.x > this.x + 100) || (!peekRight && game.input.x < this.x - 100)) {
-		return true;
+		this.raiseAlert(17);
 	}
 };
 
@@ -440,8 +482,8 @@ Teacher.prototype.neutralStance = function() {
 };
 
 Teacher.prototype.chooseRandomIdle = function() {	
-		let num = game.rnd.integerInRange(0,1);
-		if (num == 0) {
+		let num = game.rnd.integerInRange(0,8);
+		if (num < 5) {
 			this.idleAnim.stop();
 			if (!this.stopMoving) {
 				this.loadTexture(this.stretching);
@@ -452,13 +494,46 @@ Teacher.prototype.chooseRandomIdle = function() {
 				if (!this.coming)
 					this.neutralStance();
 			}, this);
-		} else{
+		} else if (num < 8){
 			this.idleAnim.stop();
 			if (!this.stopMoving) {
 				this.loadTexture(this.stretching2);
 			}
 			this.stretching2.play();
 			this.stretching2.onComplete.addOnce(function()
+			{
+				if (!this.coming)
+					this.neutralStance();
+			}, this);
+		} else if (num == 8){
+			this.idleAnim.stop();
+			if (!this.stopMoving) {
+				this.loadTexture(this.idleGlitchier);
+			}
+			this.idleGlitchier.play();
+			this.idleGlitchier.onComplete.addOnce(function()
+			{
+				if (!this.coming)
+					this.neutralStance();
+			}, this);
+		} else if (num < 12){
+			this.idleAnim.stop();
+			if (!this.stopMoving) {
+				this.loadTexture(this.idleGlitchy);
+			}
+			this.idleGlitchy.play();
+			this.idleGlitchy.onComplete.addOnce(function()
+			{
+				if (!this.coming)
+					this.neutralStance();
+			}, this);
+		} else{
+			this.idleAnim.stop();
+			if (!this.stopMoving) {
+				this.loadTexture(this.idleGlitch);
+			}
+			this.idleGlitch.play();
+			this.idleGlitch.onComplete.addOnce(function()
 			{
 				if (!this.coming)
 					this.neutralStance();

@@ -510,7 +510,7 @@ Minigame.prototype.checkResponseText = function(){
             this.responseFake2.setText("");
             this.responseDisplay1.setText("");
             this.responseDisplay2.setText("");
-            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(5,10); //mom response time
+            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(2,3); //mom response time
             this.text_send.play();
             this.finishText();
         }
@@ -530,7 +530,7 @@ Minigame.prototype.checkResponseText = function(){
             this.responseFake.setText("");
             this.responseDisplay1.setText("");
             this.responseDisplay2.setText("");
-            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(5,10); //mom response time
+            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(2,3); //mom response time
             this.text_send.play();
             this.finishText();
         }
@@ -610,7 +610,7 @@ Minigame.prototype.finishText = function() {
                 this.leftonRead.loop(Phaser.Timer.SECOND*2,
                 function(){
                     this.wrong.play();
-                    this.wrongCallback(25);
+                    this.wrongCallback(100);
                 },this);
             }, this);
             this.leftonRead.start();
@@ -637,11 +637,10 @@ Minigame.prototype.goToNextText = function(){
         this.nextText = game.rnd.integerInRange(0, this.momText.length-1);//set new text to a random one
 
         if(this.momText[this.nextText][3] == -1){//if its a repeat text, go to the next one
-            this.momText[this.nextText][3] = game.rnd.integerInRange(0,1);
             this.goToNextText();
         }
 
-        if(this.momText[this.nextText][3] != -1){//prevent previous recursions from changing values
+        if( this.momText[this.nextText][3] != -1){//prevent previous recursions from changing values
             this.textMessage.setText(this.momText[this.nextText][0]);//set the text to new string
             //randomized order
             this.randResponse = this.momText[this.nextText][1];

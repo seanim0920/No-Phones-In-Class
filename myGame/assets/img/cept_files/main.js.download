@@ -74,7 +74,7 @@ Menu.prototype = {
 		text = game.add.text(16,450,"Move your mouse away from the direction the teacher is looking.\nDo NOT cover the teacher at all costs!\nIf you don't text mom, she'll call you. (type decline/accept to end it)\n",
 			{ font: '36px Penultimate', fill: '#fff' });
 		text.x = (game.width/2)-(text.width/2);
-		text = game.add.text(0,650, '[Type the text in the google search bar to play]', {font: '48px Penultimate', fill: '#ff0000'});
+		text = game.add.text(0,650, '[Type google search prompt To Play]', {font: '48px Penultimate', fill: '#ff0000'});
 		text.x = (game.width/2)-(text.width/2);
 		//game.world.add(this.legs);
 		game.world.add(minigame);
@@ -125,7 +125,7 @@ End.prototype = {
 		this.jumpscare.play();
 		death = game.add.video('end');
 		death.play();
-		death.addToWorld(game.world.centerX,0,0.5,0,0.8,0.8);
+		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
 		death.onComplete.addOnce(function () {
 			game.state.start('Tally', true,false, this.finalscore, /*time elapsed*/19, /*truth discovered*/99);
 		}, this);
@@ -185,7 +185,7 @@ Tally.prototype = {
         scaryMusic = game.add.audio('scarymusic');
         scaryMusic.play();
         this.increment = Math.floor(this.score / 120);
-        var displays = ['YOU ARE DEAD']; // display final score]
+        var displays = ['YOU ARE DEAD', '\nTime educated: ' + this.timeElapsed + ' hours', '\n\ntruth discovered: ' + this.truthPercent + '%']; // display final score]
         var pos;
         var style = {
             font: '64px Penultimate',
@@ -195,7 +195,7 @@ Tally.prototype = {
         this.finalOutput.alpha = 0;
         this.next = game.add.audio('slice');
         //display final output one by one
-        for (var i = 0; i < displays.length; i++) {
+        for (var i = 0; i < 3; i++) {
             var string = displays[i];
             this.finalOutput.text = string;
             pos = (game.width / 2) - (this.finalOutput.width / 2);
@@ -231,7 +231,7 @@ Tally.prototype = {
     },
     update: function(){
     	if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) { // restart if SPACE is pressed
-			game.state.start('Boot');
+			game.state.start('Menu');
 			location.reload();
 		}
     }
@@ -321,9 +321,9 @@ Play.prototype = {
 		shadow.alpha = 0;
 		shadow.anchor.setTo(0.5,0.5);
    		shadow.beginFill(0x000);
-    	shadow.drawRect(vignette.width/2, -vignette.height/2-300, game.width, vignette.height+500);
-    	shadow.drawRect(-vignette.width/2,-vignette.height/2-300,-game.width,vignette.height+500);
-    	shadow.drawRect(-(vignette.width/2), -vignette.height/2, vignette.width, -300);
+    	shadow.drawRect(vignette.width/2, -vignette.height/2-200, game.width, vignette.height+400);
+    	shadow.drawRect(-vignette.width/2,-vignette.height/2-200,-game.width,vignette.height+400);
+    	shadow.drawRect(-(vignette.width/2), -vignette.height/2, vignette.width, -200);
     	shadow.drawRect(-(vignette.width/2), vignette.height/2, vignette.width, 200);
 
 		teacher.init_vignette(vignette,shadow);
@@ -398,8 +398,7 @@ Play.prototype = {
 		this.setPhone();
 		minigame.x = phone.x -phone.offsetX + this.MINIGAME_OFFSET_X;
 		minigame.y = phone.y -phone.offsetY + this.MINIGAME_OFFSET_Y;
-		//console.log(game.input.y + ", " + teacher.y);
-		if (game.input.x - 100 < teacher.x && game.input.x + 100 > teacher.x && game.input.y - 100 < teacher.y - 300 && game.input.y + 100 > teacher.y - 300) {
+		if (game.input.x - 100 < teacher.x && game.input.x + 100 > teacher.x && game.input.y + 250 > teacher.y && game.input.y - 100 < teacher.y) {
 			teacher.raiseAlert(10);
 		}
 	}
