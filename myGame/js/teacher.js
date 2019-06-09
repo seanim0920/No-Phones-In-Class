@@ -284,22 +284,22 @@ Teacher.prototype.attack = function() {
 };
 
 Teacher.prototype.sideEye = function() {
-	if (!this.coming) {
-		this.stopMoving = true;
-		tween = game.add.tween(this).to( { y: 1400 }, 500, Phaser.Easing.Circular.Out, true);
-		tween.onComplete.addOnce(function () {
-			game.world.add(this);
-			this.y = game.world.height;
-			this.scale.setTo(0.9);
-			this.x = 1400;
-			this.frontlayer.add(this);
-			this.loadTexture(this.check);
-			this.check.play();		
-			this.check.onComplete.addOnce(function() {
-				this.attackFinished();
-			}, this);
+	game.time.events.removeAll();
+	this.coming = false;
+	this.stopMoving = true;
+	tween = game.add.tween(this).to( { y: 1400 }, 500, Phaser.Easing.Circular.Out, true);
+	tween.onComplete.addOnce(function () {
+		game.world.add(this);
+		this.y = game.world.height;
+		this.scale.setTo(0.9);
+		this.x = 1400;
+		this.frontlayer.add(this);
+		this.loadTexture(this.check);
+		this.check.play();		
+		this.check.onComplete.addOnce(function() {
+			this.attackFinished();
 		}, this);
-	}
+	}, this);
 }
 
 Teacher.prototype.attackFinished = function() {

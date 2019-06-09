@@ -573,7 +573,7 @@ Minigame.prototype.finishText = function() {
             this.newMessage = true;
             this.leftonRead = game.time.create(false);
             //scroll down animation
-            this.leftonRead.add(Phaser.Timer.SECOND*15, function()
+            this.leftonRead.add(Phaser.Timer.SECOND*1, function()
             { 
                 this.incoming_response = true;
                 this.wrong.play();
@@ -583,18 +583,18 @@ Minigame.prototype.finishText = function() {
                 this.responseFake2.setText("");
                 this.responseDisplay1.setText("");
                 this.responseDisplay2.setText("");
-                this.responseDisplay1.y = 512;
-                this.responseDisplay2.y = 512;
-                this.response2.y = 512;
-                this.response1.y = 512;
+                this.responseDisplay1.y = 465;
+                this.responseDisplay2.y = 465;
+                this.response2.y = 465;
+                this.response1.y = 465;
                 this.randResponse2 = 'accept';
                 this.randResponse = 'decline';
-                this.response1.fill = '#ff0000';
-                this.response2.fill = '#49d966';
-                this.response1.fontSize = '18px';
-                this.response2.fontSize = '18px';
-                this.responseDisplay1.fontSize = '18px';
-                this.responseDisplay2.fontSize = '18px';
+                this.response1.fill = '#000000';
+                this.response2.fill = '#000000';
+                this.response1.fontSize = '16px';
+                this.response2.fontSize = '16px';
+                this.responseDisplay1.fontSize = '16px';
+                this.responseDisplay2.fontSize = '16px';
                 this.response1.alpha = 1;
                 this.response2.alpha = 1;
                 this.response1.text = this.randResponse;

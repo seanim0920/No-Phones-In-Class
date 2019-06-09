@@ -69,12 +69,12 @@ Menu.prototype = {
 		game.world.add(room);
 		var text = game.add.text(0, 64, 'No Phones in Class', { align: 'center', font: '160px Chiller', fill: '#ff0000' });
 		text.x = (game.width/2)-(text.width/2);
-		text = game.add.text(32, 200, '\nMovement: Cursor\nTyping: Keyboard',{ align: 'center',font: '48px Penultimate', fill: '#ffff00' });
+		text = game.add.text(32, 250, '\nControls: Cursor and Keyboard',{ align: 'center',font: '48px Penultimate', fill: '#ffff00' });
 		text.x = (game.width/2)-(text.width/2);
-		text = game.add.text(16,450,"Move your mouse away from the direction the teacher is looking.\nDo NOT cover the teacher at all costs!\nIf you don't text mom, she'll call you. (type decline/accept to end it)\n",
+		text = game.add.text(16,450,"Move your mouse away from the direction the teacher is looking.\nDo NOT cover the teacher at all costs!\nInteract with the phone by typing.\n",
 			{ font: '36px Penultimate', fill: '#fff' });
 		text.x = (game.width/2)-(text.width/2);
-		text = game.add.text(0,650, '[Type the text in the google search bar to play]', {font: '48px Penultimate', fill: '#ff0000'});
+		text = game.add.text(0,650, 'Type the text in the google search bar to play.', {font: '48px Penultimate', fill: '#ffff00'});
 		text.x = (game.width/2)-(text.width/2);
 		//game.world.add(this.legs);
 		game.world.add(minigame);
