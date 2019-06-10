@@ -26,7 +26,6 @@ var Minigame = function(game, optionalTheWord) {
     this.phonecall = game.add.audio('incoming_call', 0.5);
 	this.correct = game.add.audio('correct');
 	this.wrong = game.add.audio('wrong');
-    this.wrong.volume = 0.5;
 
 	// creates object for cursor input
 	cursors = game.input.keyboard.createCursorKeys();
@@ -84,20 +83,25 @@ var Minigame = function(game, optionalTheWord) {
     ["Where are you? Your sister's jazz flute\nrecital started 2 hours ago", "coming", "who?", 1],
     ["Look at this cute picture of \nyour father from 100 years ago. [IMG]", "be there soon", "not interested", 2],
     ["You never leave home without your\nYugioh deck, what's going on?", "i forgot", "i cant", 1],
-    ["Honey, there's a stranger in your room.\nAnd he's singin 'Sweet Home Alabama'","im very sick", "get him out", 2],
-    ["Did you put the chicken in the oven?\nIt was still alive.", "it was?", "*cluck*", 1],
+    ["Honey, theres a stranger in your room.\nAnd he's singing 'Sweet Home Alabama'","im very sick", "get him out", 2],
+    ["Did you put the chicken in the oven?\nIt was still alive.", "it was?", "i dont care", 1],
     ["Don't come home.", "which?", "why?", 2],
     ["Did you do the dishes like I asked?\nThe dishwasher is missing.","where is it?","coming", 1],
     ["I got a call from doctor Spindrift,\nyour results came back positive.","im thirsty", "which results?", 2],
     ["Why won't you come out of your\nroom? Unlock the door.","im not home","im not alive", 1],
     ["Your report card came in the mail today.", "im comatose", "is it bad?", 2],
     ["I JUST bought a new bottle of ranch\ndressing yesterday, why is it empty?","i was thirsty","im outside", 1],
-    ["Hurry up! Your funeral starts in 10 minutes.", "whos mobius?", "who died?", 2],
+    ["Hurry up! Your funeral starts in\n10 minutes.", "whos mobius?", "who died?", 2],
     ["All the bottles in the medicine \ncabinet are empty, what did you do?", "wasnt me", "one minute", 1],
-    ["Come home quick and try Taco Bell's\nnew limited time Jalapeno Bonanza Burrotios.", "cant sleep", "im not hungry", 2],
+    ["Come home quick and try Taco Bell's\nlimited time Fiery Bonanza Quesaritos.", "cant sleep", "im not hungry", 2],
     ["I ate all your halloween candy. Also\n the dog.","ill miss him", "my reesees!", 1],
     ["I think my phones broken, its not sending\ntexts","immense pain","works fine", 2],
     ["Honey, you're on the news! local college\nstudent missing for 3 weeks!","im right here","just call him",1],
+    ["I called the school, but they say \nyou're not on their records??","shoot him", "but im here", 2],
+    ["He is inevitable", "who is?", "let me go", 1],
+    ["Your white shirt got mixed with the \ncolors, now its covered in blood.","i dont exist", "thats ok", 2],
+    ["I think your sister is very sick. I'm\nputting her in the basement.","call a doctor", "theyre after me", 1],
+    ["Have you been skipping class to \ncommit murder?", "eat me", "no way", 2],
     ];
 
      this.responseText = [
@@ -136,59 +140,48 @@ var Minigame = function(game, optionalTheWord) {
     } else {
          this.theWord = [
             "how to kill time in class",
-            "cant move my left arm",
-            "think my teacher trying to kill me",
-            "i think someone is controlling me",
             "how to enroll online university",
-            "are there people who look like me",
-            "watch is moving backwards",
-            "whats a passing grade for cmps 120",
-            "how to know if in a coma",
+            "passing grade for cmps 120",
             "whats the number for 911",
+            "cant move my left arm",
             "pictures jason shwartzman",
             "movies out now",
-            "endgame rotten tomatoes",
-            "watch endgame free",
-            "thanos",
-            "thanos chin",
+            "how to know if in a coma",
             "thanos nude",
             "clear history google",
-            "does your voice change as u age",
-            "painful throbbing in brain",
             "head hurts why",            
             "brain tumor symptoms",
-            "average age brain tumor",
-            "survival rate brain tumor",
             "cost brain tumor surgery",
             "early onset alzheimers",
             "is healthy to eat eggs everyday",
+            "i think someone is controlling me",
             "difference between who and whom",
+            "think my teacher trying to kill me",
             "buy smart pills online",
+            "when can i escape?",
+            "are there people who look like me?",
             "why isnt pluto a planet",
-            "make money without working",
+            "painful throbbing in brain",
             "how to raise credit score",
             "early onset alzhiemers",
-            "does your vote really matter",
+            "my watch is moving backwards",
             "whats the state soil of california",
-            "rick and morty watch free",
             "why does god allow suffring",
+            "how do i get our of here",
+            "survival rate brain tumor",
             "best free moblle games 2019",
+            "body paralysed except hands webmd",
             "funny animals pics",
+            "average age brain tumor",
             "dogs with eyebrows",
-            "birds with arms",
             "early onset alzeihmers",
-            "fairly odd parents fairy guy name",
-            "cosmo nude",
             "why isnt 11 pronounced onety one",
-            "elon musk net worth",
-            "tesla 3 price",
             "tesla 3 used cheap",
             "early onset alsheimers",
-            "elon musk nude",
-            "how to hold breath lung time",
-            "when is next election",
-            "what is my iq",
-            "qwertyuioplkjhgfdsazxcvbnm"
+            "how to wake up from a dream",
+            "how to wake up from a nightmare",
+            "ok google, self destruct",
+           
             ];
         }
 
@@ -438,7 +431,7 @@ Minigame.prototype.checkText = function() {
                     }
                     if (!this.wrong.isPlaying) //play one sound at a time
                         this.wrong.play();
-                    this.wrongCallback(150);
+                    this.wrongCallback(50);
                 }
                 else //correct text message response input
                     this.tock.play();
@@ -511,7 +504,7 @@ Minigame.prototype.checkResponseText = function(){
             this.responseFake2.setText("");
             this.responseDisplay1.setText("");
             this.responseDisplay2.setText("");
-            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(2,3); //mom response time
+            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(5,10); //mom response time
             this.text_send.play();
             this.finishText();
         }
@@ -531,7 +524,7 @@ Minigame.prototype.checkResponseText = function(){
             this.responseFake.setText("");
             this.responseDisplay1.setText("");
             this.responseDisplay2.setText("");
-            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(2,3); //mom response time
+            this.time = Phaser.Timer.SECOND*game.rnd.integerInRange(5,10); //mom response time
             this.text_send.play();
             this.finishText();
         }
@@ -573,29 +566,29 @@ Minigame.prototype.finishText = function() {
             this.notification.play();
             this.newMessage = true;
             this.leftonRead = game.time.create(false);
-            //mom texts
+            //scroll down animation
             this.leftonRead.add(Phaser.Timer.SECOND*12, function()
             { 
                 this.incoming_response = true;
                 this.wrong.play();
                 this.phonecall.play();
-                this.wrongCallback(150);
+                this.wrongCallback(500);
                 this.responseFake.setText("");
                 this.responseFake2.setText("");
                 this.responseDisplay1.setText("");
                 this.responseDisplay2.setText("");
-                this.responseDisplay1.y = 512;
-                this.responseDisplay2.y = 512;
-                this.response2.y = 512;
-                this.response1.y = 512;
-                this.randResponse2 = 'accept';
+                this.responseDisplay1.y = 465;
+                this.responseDisplay2.y = 465;
+                this.response2.y = 465;
+                this.response1.y = 465;
+                this.randResponse2 = 'decline';
                 this.randResponse = 'decline';
-                this.response1.fill = '#ff0000';
-                this.response2.fill = '#49d966';
-                this.response1.fontSize = '18px';
-                this.response2.fontSize = '18px';
-                this.responseDisplay1.fontSize = '18px';
-                this.responseDisplay2.fontSize = '18px';
+                this.response1.fill = '#000000';
+                this.response2.fill = '#000000';
+                this.response1.fontSize = '16px';
+                this.response2.fontSize = '16px';
+                this.responseDisplay1.fontSize = '16px';
+                this.responseDisplay2.fontSize = '16px';
                 this.response1.alpha = 1;
                 this.response2.alpha = 1;
                 this.response1.text = this.randResponse;
@@ -611,7 +604,7 @@ Minigame.prototype.finishText = function() {
                 this.leftonRead.loop(Phaser.Timer.SECOND*2,
                 function(){
                     this.wrong.play();
-                    this.wrongCallback(50);
+                    this.wrongCallback(25);
                 },this);
             }, this);
             this.leftonRead.start();
@@ -638,10 +631,11 @@ Minigame.prototype.goToNextText = function(){
         this.nextText = game.rnd.integerInRange(0, this.momText.length-1);//set new text to a random one
 
         if(this.momText[this.nextText][3] == -1){//if its a repeat text, go to the next one
+            this.momText[this.nextText][3] = game.rnd.integerInRange(0,1);
             this.goToNextText();
         }
 
-        if( this.momText[this.nextText][3] != -1){//prevent previous recursions from changing values
+        if(this.momText[this.nextText][3] != -1){//prevent previous recursions from changing values
             this.textMessage.setText(this.momText[this.nextText][0]);//set the text to new string
             //randomized order
             this.randResponse = this.momText[this.nextText][1];
