@@ -113,9 +113,11 @@ Menu.prototype = {
 // Game Over state
 var End = function(game) {};
 End.prototype = {
-	init: function(score) {
+	init: function(config) {
 		// take in a score and save it
-		this.finalscore = score;
+		this.score = config.score;
+		this.maxCounter = config.maxCounter;
+		console.log("score is " + this.score);
 	},
 	create: function() {
 		game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
@@ -127,7 +129,7 @@ End.prototype = {
 		death.play();
 		death.addToWorld(game.world.centerX,0,0.5,0,0.8,0.8);
 		death.onComplete.addOnce(function () {
-			game.state.start('Tally', true,false, this.finalscore, /*time elapsed*/19, /*truth discovered*/99);
+			game.state.start('Tally', true,false, {score: this.score, maxCounter: this.maxCounter});
 		}, this);
 	},
 	update: function() {
@@ -174,18 +176,16 @@ Win.prototype = {
 
 var Tally = function(game) {};
 Tally.prototype = {
-    init: function(score, timeElapsed, truthPercent, record) {
-        this.score = score; // copy score parameter
-        this.timeElapsed = timeElapsed;
-        this.truthPercent = truthPercent;
-        this.record = record;
+    init: function(config) {
+		this.score = config.score; // copy score parameter
+		this.maxCounter = config.maxCounter;
     },
     create: function() {
 		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         scaryMusic = game.add.audio('scarymusic');
         scaryMusic.play();
         this.increment = Math.floor(this.score / 120);
-        var displays = ['YOU ARE DEAD']; // display final score]
+        var displays = ['YOU ARE DEAD', 'Percentage of class passed: ' + this.score.toFixed(2) + ' out of ' + this.maxCounter]; // display final score]
         var pos;
         var style = {
             font: '64px Penultimate',
@@ -201,7 +201,7 @@ Tally.prototype = {
             pos = (game.width / 2) - (this.finalOutput.width / 2);
             game.time.events.add((Phaser.Timer.SECOND / 2) * i, function(text, pos) {
                 this.next.play();
-                game.add.text(pos, 200, text, style);
+                game.add.text(pos, 200*i, text, style);
             }, this, string, pos);
         }
         game.time.events.add(Phaser.Timer.SECOND * 2, function() {
@@ -213,7 +213,7 @@ Tally.prototype = {
             this.finalOutput.text = '[SPACE] to retake the course';
             this.finalOutput.alpha = 1;
             this.finalOutput.x = pos - 500;
-            this.finalOutput.y = 72 * 6;
+            this.finalOutput.y = 72 * 7;
             this.finalOutput.fill = '#ff0000';
 
             // game.time.events.add((Phaser.Timer.SECOND/2)*digits.length,function()
@@ -307,6 +307,9 @@ Play.prototype = {
 		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
 
 		teacher = new Teacher(game, frontlayer, backlayer, minigame);
+		teacher.setDeathCallback(() => {
+			game.state.start('End', true, false, {score: this.counter, maxCounter: this.counterMax});
+		});
 		backlayer.add(teacher);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);

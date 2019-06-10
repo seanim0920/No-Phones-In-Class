@@ -83,6 +83,7 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.frontlayer = frontlayer;
 	this.backlayer = backlayer;
 	this.phonelayer = phonelayer;
+	this.deathCallback = function() {};
 
 	this.peekleft.onComplete.add(function() {
 		if (!this.coming) {
@@ -105,32 +106,6 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.goIn();
 	
 	this.alertMeter = game.time.create(false);
-
-
-	
-	
-	// switchIdle = function(flag) {
-	// 	if (flag) {
-	// 		if (!this.stopMoving) {
-	// 			this.loadTexture(this.idleAnimOverlap);
-	// 		}
-	// 		this.idleAnimOverlap.play();
-	// 		this.idleAnim.currentTime = 1;
-	// 	} else {
-	// 		if (!this.stopMoving) {
-	// 			this.loadTexture(this.idleAnim);
-	// 		}
-	// 		this.idleAnim.play();
-	// 		this.idleAnimOverlap.currentTime = 1;
-	// 	}
-	// }
-	
-	// this.idleAnim.onComplete.add(
-	// 	switchIdle, this, true
-	// );
-	// this.idleAnimOverlap.onComplete.add(
-	// 	switchIdle, this, false
-	// );
 };
 
 //set snow's prototype to that from the phaser sprite object
@@ -141,6 +116,10 @@ Teacher.prototype.constructor = Teacher;
 Teacher.prototype.setPlayerVisibility = function(visible) {
 	this.canSeePlayer = visible;
 };
+
+Teacher.prototype.setDeathCallback = function(callback) {
+	this.deathCallback = callback;
+}
 
 Teacher.prototype.goIn = function() {
 	this.walkright.play(true);
@@ -208,7 +187,7 @@ Teacher.prototype.attack = function() {
 					this.appear.onComplete.addOnce(function() {
 						if (Math.abs(game.input.x - this.x) <= 400) {
 							console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
-							game.state.start('End', true, false, {finalscore: 0});
+							this.deathCallback();
 						} else {
 							this.attackFinished();
 						}
@@ -236,7 +215,7 @@ Teacher.prototype.attack = function() {
 						if (Math.sqrt(dx * dx + dy * dy) >= 250) {	
 							this.appear.play(false, 1.1);	
 							this.appear.onComplete.addOnce(function() {
-								game.state.start('End', true, false, {finalscore: 0});
+								this.deathCallback();
 							}, this);
 						}
 						else {
@@ -271,7 +250,7 @@ Teacher.prototype.attack = function() {
 						game.time.events.remove(check);
 						if (Math.abs(game.input.x - firstx) <= 300) {
 							console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
-							game.state.start('End', true, false, {finalscore: 0});
+							this.deathCallback();
 						} else {
 							console.log("he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
 							this.attackFinished();
