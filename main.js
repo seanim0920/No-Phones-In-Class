@@ -28,6 +28,9 @@ Loading.prototype = {
 		this.loaded = false;
 		this.loadIcon = game.add.sprite(game.width/2, game.height/2, 'loading');
 		this.loadIcon.anchor.setTo(0.5,0.5);
+		scaryMusic = game.add.audio('scarymusic');
+        scaryMusic.play();
+        scaryMusic.loop = true;
 	},
 	update: function() {
 		this.loadIcon.angle += 5;
@@ -57,10 +60,10 @@ var Menu = function(game) {
 	this.MINIGAME_OFFSET_Y = 80;
 };
 Menu.prototype = {
-	create: function() {		
+	create: function() {
+		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;		
 		var room = new Phaser.Group(game);
 		game.add.audio('intro').play();
-		game.add.audio('scarymusic').play();
 		//this.legs = new Phaser.Group(game);
 
 		//move everything currently in the game world to a group
@@ -69,12 +72,12 @@ Menu.prototype = {
 		game.world.add(room);
 		var text = game.add.text(0, 64, 'No Phones in Class', { align: 'center', font: '160px Chiller', fill: '#ff0000' });
 		text.x = (game.width/2)-(text.width/2);
-		text = game.add.text(32, 200, '\nMovement: Cursor\nTyping: Keyboard',{ align: 'center',font: '48px Penultimate', fill: '#ffff00' });
+		text = game.add.text(32, 250, '\nControls: Cursor and Keyboard',{ align: 'center',font: '48px Penultimate', fill: '#ffff00' });
 		text.x = (game.width/2)-(text.width/2);
-		text = game.add.text(16,440,"Move your mouse away from where the teacher is looking.\nType in google searches without making mistakes\nand don't leave your mom on read!",
+		text = game.add.text(16,450,"Move your mouse away from the direction the teacher is looking.\nDo NOT cover the teacher at all costs!\nInteract with the phone by typing.\n",
 			{ font: '36px Penultimate', fill: '#fff' });
 		text.x = (game.width/2)-(text.width/2);
-		text = game.add.text(0,650, '[Type the first google search to play!]', {font: '48px Penultimate', fill: '#ff0000'});
+		text = game.add.text(0,650, 'Type the text in the google search bar to play.', {font: '48px Penultimate', fill: '#ffff00'});
 		text.x = (game.width/2)-(text.width/2);
 		//game.world.add(this.legs);
 		game.world.add(minigame);
@@ -113,20 +116,23 @@ Menu.prototype = {
 // Game Over state
 var End = function(game) {};
 End.prototype = {
-	init: function(score) {
+	init: function(config) {
 		// take in a score and save it
-		this.finalscore = score;
+		this.score = config.score;
+		this.maxCounter = config.maxCounter;
+		console.log("score is " + this.score);
 	},
 	create: function() {
+		game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
 		this.caught = game.add.audio('caught');
 		this.caught.play();
 		this.jumpscare = game.add.audio('jumpscare');
 		this.jumpscare.play();
 		death = game.add.video('end');
 		death.play();
-		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
+		death.addToWorld(game.world.centerX,0,0.5,0,0.8,0.8);
 		death.onComplete.addOnce(function () {
-			game.state.start('Tally', true,false, this.finalscore, /*time elapsed*/19, /*truth discovered*/99);
+			game.state.start('Tally', true,false, {score: this.score, maxCounter: this.maxCounter});
 		}, this);
 	},
 	update: function() {
@@ -147,6 +153,7 @@ Win.prototype = {
 		this.finalscore = config.finalscore;
 	},
 	create: function() {
+		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 		music = game.add.audio('music');
 		music.play('', 0, 0.5, true);
 		this.caught = game.add.audio('caught');
@@ -172,17 +179,14 @@ Win.prototype = {
 
 var Tally = function(game) {};
 Tally.prototype = {
-    init: function(score, timeElapsed, truthPercent, record) {
-        this.score = score; // copy score parameter
-        this.timeElapsed = timeElapsed;
-        this.truthPercent = truthPercent;
-        this.record = record;
+    init: function(config) {
+		this.score = config.score; // copy score parameter
+		this.maxCounter = config.maxCounter;
     },
     create: function() {
-        scaryMusic = game.add.audio('scarymusic');
-        scaryMusic.play();
+		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.increment = Math.floor(this.score / 120);
-        var displays = ['YOU ARE DEAD', '\nTime educated: ' + this.timeElapsed + ' hours', '\n\ntruth discovered: ' + this.truthPercent + '%']; // display final score]
+        var displays = ['YOU ARE DEAD', '\nPercentage of class passed: ' + this.score.toFixed(2)*2 + '%']; // display final score]
         var pos;
         var style = {
             font: '64px Penultimate',
@@ -192,13 +196,13 @@ Tally.prototype = {
         this.finalOutput.alpha = 0;
         this.next = game.add.audio('slice');
         //display final output one by one
-        for (var i = 0; i < 3; i++) {
+        for (var i = 0; i < displays.length; i++) {
             var string = displays[i];
             this.finalOutput.text = string;
             pos = (game.width / 2) - (this.finalOutput.width / 2);
             game.time.events.add((Phaser.Timer.SECOND / 2) * i, function(text, pos) {
                 this.next.play();
-                game.add.text(pos, 200, text, style);
+                game.add.text(pos, 200*i, text, style);
             }, this, string, pos);
         }
         game.time.events.add(Phaser.Timer.SECOND * 2, function() {
@@ -207,10 +211,10 @@ Tally.prototype = {
             pos = (game.width / 2) - (this.finalOutput.width / 2);
             this.bell = game.add.audio('bell');
             this.bell.play();
-            this.finalOutput.text = '[SPACE] to retake the course';
+            this.finalOutput.text = '\n[SPACE] to retake the course';
             this.finalOutput.alpha = 1;
             this.finalOutput.x = pos - 500;
-            this.finalOutput.y = 72 * 6;
+            this.finalOutput.y = 72 * 7;
             this.finalOutput.fill = '#ff0000';
 
             // game.time.events.add((Phaser.Timer.SECOND/2)*digits.length,function()
@@ -227,8 +231,10 @@ Tally.prototype = {
         }, this);
     },
     update: function(){
-    	if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) // restart if SPACE is pressed
-			game.state.start('Menu', true, false, {finalscore: this.score});
+    	if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) { // restart if SPACE is pressed
+			game.state.start('Boot');
+			location.reload();
+		}
     }
 };
 
@@ -247,6 +253,7 @@ var Play = function(game) {
 };
 Play.prototype = {
 	create: function() {
+		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 		var room = new Phaser.Group(game);
 		//this.legs = new Phaser.Group(game);
 
@@ -290,7 +297,7 @@ Play.prototype = {
 		this.bigBoyWatch = this.game.add.graphics(70,622);
 		frontlayer.add(this.bigBoyWatch);
 	    this.watchTimer = this.game.time.create(false);
-	    //this.watchTimer.loop(20, this.updateWatch, this);
+	    this.watchTimer.loop(20, this.updateWatch, this);
 	    this.watchTimer.start();
 	    this.counter = 0;
 	    this.counterMax = 100;
@@ -301,6 +308,9 @@ Play.prototype = {
 		phone.y = game.input.y - this.CURSOR_OFFSET_Y;
 
 		teacher = new Teacher(game, frontlayer, backlayer, minigame);
+		teacher.setDeathCallback(() => {
+			game.state.start('End', true, false, {score: this.counter, maxCounter: this.counterMax});
+		});
 		backlayer.add(teacher);
 
 		exit = game.input.keyboard.addKey(Phaser.Keyboard.ALT);
@@ -315,9 +325,9 @@ Play.prototype = {
 		shadow.alpha = 0;
 		shadow.anchor.setTo(0.5,0.5);
    		shadow.beginFill(0x000);
-    	shadow.drawRect(vignette.width/2, -vignette.height/2-200, game.width, vignette.height+400);
-    	shadow.drawRect(-vignette.width/2,-vignette.height/2-200,-game.width,vignette.height+400);
-    	shadow.drawRect(-(vignette.width/2), -vignette.height/2, vignette.width, -200);
+    	shadow.drawRect(vignette.width/2, -vignette.height/2-300, game.width, vignette.height+500);
+    	shadow.drawRect(-vignette.width/2,-vignette.height/2-300,-game.width,vignette.height+500);
+    	shadow.drawRect(-(vignette.width/2), -vignette.height/2, vignette.width, -300);
     	shadow.drawRect(-(vignette.width/2), vignette.height/2, vignette.width, 200);
 
 		teacher.init_vignette(vignette,shadow);
@@ -392,8 +402,9 @@ Play.prototype = {
 		this.setPhone();
 		minigame.x = phone.x -phone.offsetX + this.MINIGAME_OFFSET_X;
 		minigame.y = phone.y -phone.offsetY + this.MINIGAME_OFFSET_Y;
-		if (game.input.x - 100 < teacher.x && game.input.x + 100 > teacher.x && game.input.y + 300 > teacher.y && game.input.y - 100 < teacher.y) {
-			teacher.raiseAlert(20);
+		//console.log(game.input.y + ", " + teacher.y);
+		if (game.input.x - 100 < teacher.x && game.input.x + 100 > teacher.x && game.input.y - 100 < teacher.y - 300 && game.input.y + 100 > teacher.y - 300) {
+			teacher.raiseAlert(10);
 		}
 	}
 };
