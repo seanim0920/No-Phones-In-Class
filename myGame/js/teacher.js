@@ -21,7 +21,10 @@ TeacherPreload = function(game) {
 	game.load.video('drawOverlap', 'assets/video/drawing.webm');
 	game.load.video('appear', 'assets/video/pop.webm');
 	game.load.video('drop', 'assets/video/drop.webm');
-	game.load.image('come', 'assets/img/coming.png');
+	game.load.image('exclamation','assets/img/exclamation.png');
+	game.load.video('idleGlitch', 'assets/video/idleglitch.webm');
+	game.load.video('idleGlitchier', 'assets/video/idleglitchier.webm');
+	game.load.video('idleGlitchy', 'assets/video/idleglitchy.webm');
 }
 
 //constructor for teacher
@@ -31,18 +34,18 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	
 	this.originalY = game.world.height - 100;
 	this.originalX = game.world.centerX;
-	this.startDelay = 10;
+	this.startDelay = 1.5;
 	this.endDelay = 15;
 	this.safe_zone = -75;
-	this.suspicion = 0;
+	this.suspicion = 300;
 	this.suspicionMax = 1000;
 	this.coming = false; //teacher is currently hunting you
 	this.cooldown = true; //alert cooldown phase
 	//refer to the constructor for the sprite object in Phaser
+	this.max_vid_speed = 16;
 	this.creepy = game.add.audio('music');
 	this.breathing = game.add.audio('breathing');
 	this.alert = game.add.audio('alert');
-	this.peek = game.add.video('peek');
 	this.turnright = game.add.video('turnright');
 	this.turnright.volume = 0;
 	this.turnleft = game.add.video('turnleft');
@@ -62,21 +65,33 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 	this.peekright.volume = 0;
 	this.stretching = game.add.video('stretching');
 	this.stretching2 = game.add.video('stretching2');
+	this.idleGlitch = game.add.video('idleGlitch');
+	this.idleGlitchy = game.add.video('idleGlitchy');
+	this.idleGlitchier = game.add.video('idleGlitchier');
 	this.check = game.add.video('check');
+	this.check.volume = 0;
 	this.music = game.add.audio('speech');
 	this.appear = game.add.video('appear');
 	this.idleAnim = game.add.video('draw');
 	this.idleAnimOverlap = game.add.video('drawOverlap');
 	this.disappear = game.add.audio('bell');
 	this.music.play('', 0, 1, true);
-	Phaser.Sprite.call(this, game, this.originalX, this.originalY, "", 1, 1);	
+	Phaser.Sprite.call(this, game, this.originalX, this.originalY, "", 1, 1);
 	this.caughtCallback = function(){};
+
+	this.durationTimer = this.game.time.create(false);
+	this.durationTimer.loop(1000, this.dummyIncTime, this);
+	this.durationTimer.start();
+	this.duration = 0;
+
+	this.deathCallback = function() {};
 	this.canSeePlayer = true;
 	this.speed = 1;
 	this.distance = 100;
 	this.frontlayer = frontlayer;
 	this.backlayer = backlayer;
 	this.phonelayer = phonelayer;
+	this.timeEvents = game.time.create(false); //this controls all the non-attack timer functions
 
 	this.peekleft.onComplete.add(function() {
 		if (!this.coming) {
@@ -90,35 +105,13 @@ var Teacher = function(game, frontlayer, backlayer, phonelayer) {
 			this.neutralStance();
 		}
 	}, this);
-	
+
+	this.x = 0;
 	this.alertMeter = game.time.create(false);
+	this.scale.setTo(0.4);
+	this.anchor.setTo(0.5, 1);
 
-	this.neutralStance();
-
-	
-	
-	// switchIdle = function(flag) {
-	// 	if (flag) {
-	// 		if (!this.stopMoving) {
-	// 			this.loadTexture(this.idleAnimOverlap);
-	// 		}
-	// 		this.idleAnimOverlap.play();
-	// 		this.idleAnim.currentTime = 1;
-	// 	} else {
-	// 		if (!this.stopMoving) {
-	// 			this.loadTexture(this.idleAnim);
-	// 		}
-	// 		this.idleAnim.play();
-	// 		this.idleAnimOverlap.currentTime = 1;
-	// 	}
-	// }
-	
-	// this.idleAnim.onComplete.add(
-	// 	switchIdle, this, true
-	// );
-	// this.idleAnimOverlap.onComplete.add(
-	// 	switchIdle, this, false
-	// );
+	this.goIn();
 };
 
 //set snow's prototype to that from the phaser sprite object
@@ -130,6 +123,32 @@ Teacher.prototype.setPlayerVisibility = function(visible) {
 	this.canSeePlayer = visible;
 };
 
+Teacher.prototype.setDeathCallback = function(callback) {
+	this.deathCallback = callback;
+};
+
+//At start of game, teacher walks towards board
+Teacher.prototype.goIn = function() {
+	this.timeEvents.start();
+	this.walkright.play(true);
+	this.loadTexture(this.walkright);
+	this.returnright.onComplete.addOnce(function()
+	{
+		this.stopMoving = false;
+		this.neutralStance();
+	},this);
+	var check = this.timeEvents.loop(0, function () {
+		//console.log("predicted position is " + this.x + speed);
+		if (this.x > game.width/2) {
+			this.timeEvents.remove(check);
+			this.returnright.play();
+			this.loadTexture(this.returnright);
+			//this.walkright.stop();
+		}
+		this.x += 5;
+	}, this);
+};
+
 //have teacher hide behind one of the students
 //students come in from the sides. sometimes the teacher will leave from the sides and hide behind one of them. scare them and the teacher will come out.
 Teacher.prototype.init_vignette = function(vignette, frame)
@@ -138,58 +157,62 @@ Teacher.prototype.init_vignette = function(vignette, frame)
 	this.vignetteFrame = frame;
 };
 
-Teacher.prototype.screen_fadeTo = function(_alpha)
-{
-	game.add.tween(this.vignetteFrame).to({alpha: _alpha},Phaser.Timer.SECOND,Phaser.Easing.Circular.Out, true);
-	game.add.tween(this.vignette).to({alpha: _alpha},Phaser.Timer.SECOND,Phaser.Easing.Circular.Out, true);
-}
-
+//Teacher is going to hunt you down
 Teacher.prototype.attack = function() {
 	if (!this.coming) {
+		//stop all current animations
+		this.stopAnim();
+		this.timeEvents.stop();
+		this.timeEvents.removeAll();
+		//Teacher is pissed
 		this.suspicion = this.suspicionMax;
 		this.cooldown = false;
 		this.coming = true;
 		this.alertMeter.stop();
-		this.disappear.play();
+		this.alert.play();
 		this.stopMoving = true;
-
+		var diff_speed;
 		this.music.pause();
 		
 		this.y = this.y - 100;
 		this.loadTexture(this.drop);
 		this.drop.play();
+		game.add.existing(new Exclamation(game,this.x-80,this.y-350,120));
 		this.drop.onComplete.addOnce(function(){
 			this.creepy.play();
-			var move = game.rnd.integerInRange(0, 6);
-			if (move < 3) {
+			this.alpha = 0;
+			var move = game.rnd.integerInRange(0, 8);
+			// a normal pop-up attack
+			if (move < 5) {
 				this.frontlayer.add(this);
 				this.x = game.rnd.realInRange(500, game.world.width - 500);
 				game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
-					this.scale.setTo(0.8);
+					this.scale.setTo(0.5);
 					this.y = game.world.height;
 					this.loadTexture(this.appear);	
-					this.appear.play();	
+					this.alpha = 1;
+					this.appear.play(false, Math.min(this.max_vid_speed,0.5+this.duration));	
 					this.creepy.stop();
 					this.appear.onComplete.addOnce(function() {
 						if (Math.abs(game.input.x - this.x) <= 400) {
-							console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
-							game.state.start('End', true, false, {finalscore: 0});
+							this.deathCallback();
 						} else {
+							game.camera.flash(0x000000, 800);
 							this.attackFinished();
 						}
 					}, this);
 				}, this);
-			} else if (move == 5) {
+			} else if (move == 5) { //a movement-based attack. Player should stay still
 				this.x = game.world.centerX;
 				game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
 					this.breathing.play();
 					firstx = game.input.x;
 					firsty = game.input.y;
+					this.y = 0;
 					game.time.events.add(Phaser.Timer.SECOND * 1.2, function() {
 						game.world.add(this);
 						this.breathing.stop();
 						this.scale.setTo(1);
-						this.y = 0;
 						this.angle = 180;
 						this.loadTexture(this.appear);
 						this.creepy.stop();
@@ -197,27 +220,30 @@ Teacher.prototype.attack = function() {
 						var dx = game.input.x - firstx;
 						var dy = game.input.y - firsty;
 	
-						if (Math.sqrt(dx * dx + dy * dy) >= 250) {	
-							this.appear.play();	
+						this.alpha = 1;
+						if (Math.sqrt(dx * dx + dy * dy) >= 250) {
+							this.appear.play(false, Math.min(this.max_vid_speed,0.5+this.duration));	
 							this.appear.onComplete.addOnce(function() {
-								game.state.start('End', true, false, {finalscore: 0});
+								this.deathCallback();
 							}, this);
 						}
 						else {
 							this.angle = 0;
+							game.camera.flash(0x000000, 800);
 							this.attackFinished();
 						}
 					}, this);
 				}, this);
 			} 
-			else {
+			else { //An in-phone attack. Player should move their phone away
 				this.phonelayer.add(this);
 				game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 6)), function() {
 					this.y = 600;
 					this.x = 200;
 					this.scale.setTo(0.7);
 					this.loadTexture(this.appear);
-					this.appear.play();	
+					this.alpha = 1;
+					this.appear.play(false, Math.min(this.max_vid_speed,0.5+this.duration));	
 					this.creepy.stop();		
 					firstx = game.input.x;
 					firsty = game.input.y;
@@ -233,10 +259,9 @@ Teacher.prototype.attack = function() {
 					this.appear.onComplete.addOnce(function() {
 						game.time.events.remove(check);
 						if (Math.abs(game.input.x - firstx) <= 300) {
-							console.log("you failed, he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
-							game.state.start('End', true, false, {finalscore: 0});
+							this.deathCallback();
 						} else {
-							console.log("he was at" + this.x + "with a distance of " +Math.abs(game.input.x - this.x) + "with a height of " + this.y );
+							game.camera.flash(0x000000, 800);
 							this.attackFinished();
 						}
 					}, this);
@@ -246,37 +271,82 @@ Teacher.prototype.attack = function() {
 	}
 };
 
-Teacher.prototype.sideEye = function() {
-	this.stopMoving = true;
-	tween = game.add.tween(this).to( { y: 1800 }, 600, Phaser.Easing.Circular.Out, true);
-	tween.onComplete.addOnce(function () {
-		this.scale.setTo(0.9);
-		this.x = 1400;
-		this.frontlayer.add(this);
-		this.loadTexture(this.check);
-		this.check.play();		
-		this.check.onComplete.addOnce(function() {
-			this.attackFinished();
-		}, this);
-	}, this);
+//stop all current animations and their onComplete events
+Teacher.prototype.stopAnim = function(){
+	//stop all animations
+	this.turnright.stop();
+	this.turnleft.stop();
+	this.walkright.stop();
+	this.walkleft.stop();
+	this.returnright.stop();
+	this.returnleft.stop();
+	this.drop.stop();
+	this.peekleft.stop();
+	this.peekright.stop();
+	this.stretching.stop();
+	this.stretching2.stop();
+	this.idleGlitch.stop();
+	this.idleGlitchy.stop();
+	this.idleGlitchier.stop();
+	this.check.stop();
+	this.appear.stop();
+	this.idleAnim.stop();
+	this.idleAnimOverlap.stop();
 }
 
+//Spook the player with a disappointing glare, when player picks up phonecall
+Teacher.prototype.sideEye = function() {
+	if (!this.coming)
+	{
+		this.stopAnim();
+		this.timeEvents.stop();
+		this.timeEvents.removeAll();
+		this.coming = false;
+		this.stopMoving = true;
+		this.loadTexture(this.idleAnim);
+		this.y = this.originalY;
+		this.idleAnim.play();
+		tween = game.add.tween(this).to( { y: 1400 }, 500, Phaser.Easing.Circular.Out, true);
+		tween.onComplete.addOnce(function () {
+			this.idleAnim.stop();
+			game.world.add(this);
+			this.y = game.world.height;
+			this.scale.setTo(0.9);
+			this.x = 1400;
+			this.frontlayer.add(this);
+			this.loadTexture(this.check);
+			this.check.play();		
+			this.check.onComplete.addOnce(function() {
+				this.attackFinished();
+			}, this);
+		}, this);
+	}
+}
+
+//return to normal
 Teacher.prototype.attackFinished = function() {
+	console.log("attacked is finished, teacher is at " + this.x + ", " + this.y);
 	this.suspicion = 0;
 	this.cooldown = true;
 	this.coming = false;
 	this.backlayer.add(this);
+	this.x = game.rnd.realInRange(500, game.world.width - 500);
 	this.neutralStance();
-	game.camera.flash(0x000000, 800);
 }
 
+//walk around
 Teacher.prototype.move = function(goRight) {
-	if (!this.stopMoving) {
+	if (!this.stopMoving && !this.coming) {
+	this.stopAnim();
+	this.timeEvents.stop();
+	this.timeEvents.removeAll();
+	this.timeEvents.start();
 	this.stopMoving = true;
 
 	var turnAnim = this.turnleft;
 	this.returnAnim = this.returnleft;
-	if (this.x+50 > game.world.width - 450) //no more space at right
+	//if at edge of movement path, go the other way
+	if (this.x+50 > game.world.width - 450)
 			goRight = false;
 		else if (this.x - 50 < 450)
 			goRight = true;
@@ -285,6 +355,7 @@ Teacher.prototype.move = function(goRight) {
 		turnAnim = this.turnright;
 		this.returnAnim = this.returnright
 	}
+	//start turning
 	this.loadTexture(turnAnim);
 	turnAnim.play();
 	turnAnim.onComplete.addOnce(function() {
@@ -301,32 +372,36 @@ Teacher.prototype.move = function(goRight) {
 
 		walkAnim.play(true);
 		this.loadTexture(walkAnim);
-		var check = game.time.events.loop(0, function () {
-			//console.log("predicted position is " + this.x + speed);
+		//loop check
+		var check = this.timeEvents.loop(0, function () {
+			this.checkIfVisible(goRight,17); //suspicion raises if player is within peripheral
+			//Stop walking if reached end of movement boundary
 			if ((this.x - 50 < 450 && !goRight) || (this.x + 50 > game.world.width - 450 && goRight)) {
-				game.time.events.remove(check);
-				game.time.events.remove(stop);
+				this.timeEvents.remove(check);
+				this.timeEvents.remove(stop);
 				this.returnAnim.play();
 				this.loadTexture(this.returnAnim);
 				//walkAnim.stop();
 			}
 			this.x += speed;
 		}, this);
-		var stop = game.time.events.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 3)), function() {
-			game.time.events.remove(check);
-			game.time.events.remove(stop);
+		//stop walking after a set amount of seconds
+		var stop = this.timeEvents.add(Phaser.Timer.SECOND * (game.rnd.realInRange(1, 3)), function() {
+			this.timeEvents.remove(check);
+			this.timeEvents.remove(stop);
 			this.returnAnim.play();
 			this.loadTexture(this.returnAnim);
 			//walkAnim.stop();
 		}, this);
 	}, this);
-	console.log(this.returnAnim);
+	//return to normal stance
 	this.returnAnim.onComplete.addOnce(function() {
 		this.neutralStance();
 	}, this);
 }
 };
 
+//Fade vignette, which indicates suspicion meter
 Teacher.prototype.vignette_setTo = function(_alpha) {
 	this.vignetteFrame.alpha = _alpha;
 	this.vignette.alpha = _alpha;
@@ -334,36 +409,39 @@ Teacher.prototype.vignette_setTo = function(_alpha) {
 
 Teacher.prototype.update = function()
 {
-	//console.log(this.suspicion);
+	//vignette will never be fully opaque
 	this.vignette_setTo(this.suspicion/(this.suspicionMax + 177));
-	if (this.cooldown)
+	if (this.cooldown) //cooldown suspicion meter
 	{
 		if (this.suspicion > 0)
-			this.suspicion-= 3;
+			this.suspicion -= 5;
 		else
 			this.suspicion = 0;
 	}
 }
 
+//raiser teacher suspicion by amount
 Teacher.prototype.raiseAlert = function(amount) {
-	console.log("suspicion is " + this.suspicion);
 	this.suspicion += amount;
-	this.cooldown = false;
+	this.cooldown = false; //stop lowering suspicion
 	this.alertMeter.stop();
-	if (!this.coming)
+	if (!this.coming) //not already after the player
 	{
+		//3 second delay before suspicion cools down
 		this.alertMeter.add(Phaser.Timer.SECOND*3,function() {this.cooldown = true;},this);
 		this.alertMeter.start();
 	}
+	//teacher has had enough
 	if (this.suspicion >= this.suspicionMax)
 	{
 		this.suspicion = this.suspicionMax;
 		if (!this.coming) {
-			this.attack();
+			this.attack(); //hunt the player
 		}
 	}
 };
 
+//turn to check on player
 Teacher.prototype.turn = function(peekRight) {
   if (!this.stopMoving) {
     this.stopMoving = true;
@@ -371,61 +449,72 @@ Teacher.prototype.turn = function(peekRight) {
 	if (peekRight) {
 		peekAnim = this.peekright;
 	}
-    var peekStart = 2;
-    var peekDuration = 1;
+    var peekStart = 1; //time before he sees you
+    var peekDuration = 2; //time before he goes back to board
     this.music.pause();
     this.loadTexture(peekAnim);
     peekAnim.play();
-    game.time.events.add(Phaser.Timer.SECOND * (peekStart), 
+    this.timeEvents.add(Phaser.Timer.SECOND * (peekStart), 
       function () {
-        var check = game.time.events.loop(0, () => {
-          if (this.checkIfVisible(peekRight)) {
-            game.time.events.remove(check);
-			this.alert.play();
-			this.attack();
-          }
+        var check = this.timeEvents.loop(0, () => {
+          this.checkIfVisible(peekRight,25); //suspicion raises if phone is in sight
         }, this);
-        game.time.events.add(Phaser.Timer.SECOND * (peekDuration), function() {game.time.events.remove(check)}, this);
+        this.timeEvents.add(Phaser.Timer.SECOND * (peekDuration), function() {this.timeEvents.remove(check)}, this);
       },
 	this);
   }
 };
 
-Teacher.prototype.checkIfVisible = function(peekRight) {
-	//console.log('peeking direction? ' + peekRight);
+//check if player is in front of teacher direction
+Teacher.prototype.checkIfVisible = function(peekRight,amount) {
 	if ((peekRight && game.input.x > this.x + 100) || (!peekRight && game.input.x < this.x - 100)) {
-		return true;
+		this.raiseAlert(amount);
 	}
 };
 
+//callbacks
 Teacher.prototype.setCallbackWhenCaught = function(callback) {
 	this.caughtCallback = callback;
 };
 
+//increment difficulty speed
+Teacher.prototype.dummyIncTime = function() {
+	this.duration += 0.01;
+	if (this.duration*3 > 400)
+		this.durationTimer.stop();
+};
+
+//idle drawing animation
 Teacher.prototype.neutralStance = function() {
+	this.stopAnim();
+	//stop all other animations
+	this.timeEvents.stop();
+	this.timeEvents.removeAll();
+	this.timeEvents.start();
 	this.stopMoving = false;
 	this.anchor.setTo(0.5,1);
 	this.scale.setTo(0.4);
 	this.y = this.originalY;
 	this.music.resume();
-
+	this.idleAnim.stop();
 	this.loadTexture(this.idleAnim);
 	this.idleAnim.play(true);
 
-	var delay = game.rnd.realInRange(this.startDelay, this.endDelay);
+	//randomly perform an action
+	var delay = game.rnd.realInRange(this.startDelay, Math.min(3.5,this.endDelay-(3*this.duration)));
 	var move = game.rnd.integerInRange(0, 6);
-	var checkIfOpen = game.time.events.add(Phaser.Timer.SECOND * (delay), function () {
+	var checkIfOpen = this.timeEvents.add(Phaser.Timer.SECOND * (delay), function () {
 		if (!this.stopMoving) {
 			var right = 0;
 			var left = 1;
 			var direction = game.rnd.integerInRange(right, left);
 			this.idleAnim.paused = true;
-			//this.idleAnimOverlap.paused = true;
-			game.time.events.remove(checkIfOpen);
+			this.timeEvents.remove(checkIfOpen);
+			//turn and look at player
 			if (move < 4) {
 				this.turn(direction == right);
 			}
-			else if (move != 4)
+			else if (move != 4) //walk around
 			{
 				var direction = right;
 				if (this.x >= game.world.centerX) {
@@ -433,35 +522,56 @@ Teacher.prototype.neutralStance = function() {
 				}
 				this.move(direction == right);
 			}
-			else //stretch break
+			else //alternative idle animation
 				this.chooseRandomIdle();
 		}
 	}, this);
 };
 
 Teacher.prototype.chooseRandomIdle = function() {	
-		let num = game.rnd.integerInRange(0,1);
-		if (num == 0) {
-			this.idleAnim.stop();
-			if (!this.stopMoving) {
-				this.loadTexture(this.stretching);
-			}
-			this.stretching.play();
-			this.stretching.onComplete.addOnce(function() 
-			{
-				if (!this.coming)
-					this.neutralStance();
-			}, this);
-		} else{
-			this.idleAnim.stop();
-			if (!this.stopMoving) {
-				this.loadTexture(this.stretching2);
-			}
-			this.stretching2.play();
-			this.stretching2.onComplete.addOnce(function()
-			{
-				if (!this.coming)
-					this.neutralStance();
-			}, this);
-		}
+		let num = game.rnd.integerInRange(0,8);
+
+		this.idleAnim.stop();
+		var anim;
+		if (num < 5) //stretch
+			anim = this.stretching;
+		else if (num < 8)
+			anim = this.stretching2;
+		else if (num == 8) //teacher is paranormal
+			anim = this.idleGlitchier;
+		else if (num < 12)
+			anim = this.idleGlitchy;
+		else
+			anim = this.idleGlitch;
+
+		this.loadTexture(anim);
+		anim.play();
+		anim.onComplete.addOnce(function(){this.neutralStance();},this);
 	};
+
+//Teacher spotted player
+function Exclamation (game,x,y,size) {
+	Phaser.Sprite.call(this, game, x, y, 'exclamation', 0);
+	this.alpha = 1;
+	this.anchor.setTo(0.5,1);
+	this.scale.y = 0;
+	tween = game.add.tween(this.scale).to( { y: 1 }, 200, Phaser.Easing.Circular.Out, true);
+	tween.onComplete.addOnce(function(){game.time.events.add(Phaser.Timer.SECOND/2,function(){this.fade = true;},this);},this);
+}
+
+Exclamation.prototype = Object.create(Phaser.Sprite.prototype);
+Exclamation.prototype.constructor = Exclamation;
+Exclamation.prototype.create = function(){
+	this.icon.x = 0;
+}
+Exclamation.prototype.update = function() {
+	if (this.fade)
+	{
+		if (this.alpha >= 0)
+			this.alpha -= 0.05;
+		if (this.alpha <= 0)
+		{
+			this.destroy();
+		}
+	}
+}
