@@ -1,4 +1,9 @@
 // Loading state
+//Group 39: UCSC
+//Andrew Vien
+//Gideon Fox
+//Sean Fronteras
+
 var Loading = function(game) {};
 Loading.prototype = {
 	preload: function() {
