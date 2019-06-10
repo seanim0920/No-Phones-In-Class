@@ -437,7 +437,7 @@ Minigame.prototype.checkText = function() {
                     }
                     if (!this.wrong.isPlaying) //play one sound at a time
                         this.wrong.play();
-                    this.wrongCallback(250);
+                    this.wrongCallback(100);
                 }
                 else //correct text message response input
                     this.tock.play();
@@ -573,7 +573,7 @@ Minigame.prototype.finishText = function() {
             this.newMessage = true;
             this.leftonRead = game.time.create(false);
             //scroll down animation
-            this.leftonRead.add(Phaser.Timer.SECOND*1, function()
+            this.leftonRead.add(Phaser.Timer.SECOND*12, function()
             { 
                 this.incoming_response = true;
                 this.wrong.play();
@@ -610,7 +610,7 @@ Minigame.prototype.finishText = function() {
                 this.leftonRead.loop(Phaser.Timer.SECOND*2,
                 function(){
                     this.wrong.play();
-                    this.wrongCallback(25);
+                    this.wrongCallback(250);
                 },this);
             }, this);
             this.leftonRead.start();

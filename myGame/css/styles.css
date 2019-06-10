@@ -1,3 +1,16 @@
 body {
 	font-family: Helvetica;
 }
+@font-face {
+	font-family: "Chiller";
+	font-style: normal;
+	font-weight: 400;
+	src: url("../assets/fonts/CHILLER.ttf");
+}
+
+@font-face {
+	font-family: "Penultimate";
+	font-style: normal;
+	font-weight: 400;
+	src: url("../assets/fonts/PENULTIMATE.ttf");
+}

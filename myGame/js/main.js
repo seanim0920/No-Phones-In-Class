@@ -25,9 +25,14 @@ Loading.prototype = {
 		game.add.plugin(PhaserInput.Plugin);
 	},
 	create: function() {
+		game.add.text(0, 0, "hack", {font:"1px Chiller", fill:"#AA"});
+		game.add.text(0, 0, "hack", {font:"1px Penultimate", fill:"#AA"});
 		this.loaded = false;
 		this.loadIcon = game.add.sprite(game.width/2, game.height/2, 'loading');
 		this.loadIcon.anchor.setTo(0.5,0.5);
+		scaryMusic = game.add.audio('scarymusic');
+        scaryMusic.play();
+        scaryMusic.loop = true;
 	},
 	update: function() {
 		this.loadIcon.angle += 5;
@@ -182,10 +187,8 @@ Tally.prototype = {
     },
     create: function() {
 		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-        scaryMusic = game.add.audio('scarymusic');
-        scaryMusic.play();
         this.increment = Math.floor(this.score / 120);
-        var displays = ['YOU ARE DEAD', 'Percentage of class passed: ' + this.score.toFixed(2) + ' out of ' + this.maxCounter]; // display final score]
+        var displays = ['YOU ARE DEAD', '\nPercentage of class passed: ' + this.score.toFixed(2)*2 + '%']; // display final score]
         var pos;
         var style = {
             font: '64px Penultimate',
@@ -210,7 +213,7 @@ Tally.prototype = {
             pos = (game.width / 2) - (this.finalOutput.width / 2);
             this.bell = game.add.audio('bell');
             this.bell.play();
-            this.finalOutput.text = '[SPACE] to retake the course';
+            this.finalOutput.text = '\n[SPACE] to retake the course';
             this.finalOutput.alpha = 1;
             this.finalOutput.x = pos - 500;
             this.finalOutput.y = 72 * 7;
@@ -339,13 +342,10 @@ Play.prototype = {
 			rscale = game.rnd.realInRange(-0.3,0.3);
 			student.scale.setTo(0.5,0.5);
 			student.anchor.setTo(0.5,1);
-
 			students.add(student);
 		}
-
 		game.time.events.loop(Phaser.Timer.SECOND * game.rnd.realInRange(1.00,3.00), function() {
 			var i = game.rnd.integerInRange(0,2); 			
-
 			messages.add(new TextMessage(game, students.getChildAt(i).x, students.getChildAt(i).y-200, game.rnd.realInRange(-.7,.7),  game.rnd.realInRange(0,-5.9)));
 		},this);*/
 
