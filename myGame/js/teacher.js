@@ -254,7 +254,7 @@ Teacher.prototype.attack = function() {
 					this.scale.setTo(0.7);
 					this.loadTexture(this.appear);
 					this.alpha = 1;
-					this.appear.play(false, 0.5);	
+					this.appear.play(false, 0.6);	
 					this.creepy.stop();		
 					firstx = game.input.x;
 					firsty = game.input.y;
