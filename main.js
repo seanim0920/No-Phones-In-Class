@@ -119,11 +119,11 @@ End.prototype = {
 	init: function(config) {
 		// take in a score and save it
 		this.score = config.score;
-		this.maxCounter = config.maxCounter;
+		this.winLose = config.winLose;
 		console.log("score is " + this.score);
 	},
 	create: function() {
-		game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
+		game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;	
 		this.caught = game.add.audio('caught');
 		this.caught.play();
 		this.jumpscare = game.add.audio('jumpscare');
@@ -132,7 +132,7 @@ End.prototype = {
 		death.play();
 		death.addToWorld(game.world.centerX,0,0.5,0,0.8,0.8);
 		death.onComplete.addOnce(function () {
-			game.state.start('Tally', true,false, {score: this.score, maxCounter: this.maxCounter});
+			game.state.start('Tally', true,false, {score: this.score, winLose: this.winLose});
 		}, this);
 	},
 	update: function() {
@@ -145,48 +145,19 @@ End.prototype = {
 	}
 };
 
-// Game Over state
-var Win = function(game) {};
-Win.prototype = {
-	init: function(config) {
-		// take in a score and save it
-		this.finalscore = config.finalscore;
-	},
-	create: function() {
-		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-		music = game.add.audio('music');
-		music.play('', 0, 0.5, true);
-		this.caught = game.add.audio('caught');
-		this.caught.play();
-		death = game.add.video('end');
-		death.play();
-		death.addToWorld(game.world.centerX,0,0.5,0,1,1.1);
-		death.onComplete.addOnce(function () {
-			music.stop();
-			game.state.start('Menu', true, false, {finalscore: this.score});
-		}, this);
-	},
-	update: function() {
-		// restart the game when the up key is pressed
-		cursors = game.input.keyboard.createCursorKeys();
-		if (cursors.up.isDown)
-		{
-			game.state.start('Play');
-		}
-	}
-};
 
 
 var Tally = function(game) {};
 Tally.prototype = {
     init: function(config) {
 		this.score = config.score; // copy score parameter
-		this.maxCounter = config.maxCounter;
+		this.winLose = config.winLose;
     },
     create: function() {
 		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.increment = Math.floor(this.score / 120);
-        var displays = ['YOU ARE DEAD', '\nPercentage of class passed: ' + this.score.toFixed(2)*2 + '%']; // display final score]
+        if(this.winLose == false){ var displays = ['YOU ARE DEAD', '\nPercentage of class passed: ' + this.score.toFixed(2)*1.25 + '%', '\n\ngrade: F+'];}
+        else{var displays = ['YOU ESCAPED CLASS', '\nPercentage of class passed: 100%', '\n\ngrade: A-'];}
         var pos;
         var style = {
             font: '64px Penultimate',
@@ -202,32 +173,20 @@ Tally.prototype = {
             pos = (game.width / 2) - (this.finalOutput.width / 2);
             game.time.events.add((Phaser.Timer.SECOND / 2) * i, function(text, pos) {
                 this.next.play();
-                game.add.text(pos, 200*i, text, style);
+                game.add.text(pos, 100*i, text, style);
             }, this, string, pos);
         }
-        game.time.events.add(Phaser.Timer.SECOND * 2, function() {
+        game.time.events.add(Phaser.Timer.SECOND * 1.5, function() {
             this.finalOutput.fontSize = '96px';
             this.finalOutput.text = '';
             pos = (game.width / 2) - (this.finalOutput.width / 2);
             this.bell = game.add.audio('bell');
             this.bell.play();
-            this.finalOutput.text = '\n[SPACE] to retake the course';
+            this.finalOutput.text = '\n[SPACE] to retake the class';
             this.finalOutput.alpha = 1;
             this.finalOutput.x = pos - 500;
             this.finalOutput.y = 72 * 7;
             this.finalOutput.fill = '#ff0000';
-
-            // game.time.events.add((Phaser.Timer.SECOND/2)*digits.length,function()
-            // {
-            // this.finalOutput.fontSize = '32px';
-            // this.finalOutput.text = '\n\n\nPress [SPACE] to restart';
-            // this.finalOutput.fill = '#ff0000';
-            // pos = (game.width/2)-(this.finalOutput.width/2);
-            // this.finalOutput.x = pos
-
-            // this.next = game.add.audio('boom');
-            // this.next.play();
-            // },this);
         }, this);
     },
     update: function(){
@@ -284,7 +243,7 @@ Play.prototype = {
 		minigame.mask = screen;
 
 	    minigame.setCorrectTextInputCallback(() => {
-			this.counter += 5;
+			this.counter += 6; //eaze
 		});
 
 		this.erase = game.add.audio('erase');
@@ -309,7 +268,7 @@ Play.prototype = {
 
 		teacher = new Teacher(game, frontlayer, backlayer, minigame);
 		teacher.setDeathCallback(() => {
-			game.state.start('End', true, false, {score: this.counter, maxCounter: this.counterMax});
+			game.state.start('End', true, false, {score: this.counter, winLose: false});
 		});
 		backlayer.add(teacher);
 
@@ -385,7 +344,8 @@ Play.prototype = {
 	},
 	updateWatch: function() {
 		if(this.counter > 0){
-			this.counter-=.01;//time moves backwards
+			this.counter-=.005;//time moves backwards
+			this.counter+=5;//time moves backwards
 			//console.log("foreward");
 		}
 		//console.log("end angle "+ this.counter);
@@ -394,6 +354,10 @@ Play.prototype = {
 		this.bigBoyWatch.beginFill(0xFFFFFF);
 		this.bigBoyWatch.arc(0, 0, 30, this.game.math.degToRad(-90), this.game.math.degToRad(-90+(360/this.counterMax)*(this.counterMax-this.counter)), true);
 		this.bigBoyWatch.endFill();
+		if(this.counter >= 100){
+			game.state.start('End', true, false, {score: this.counter, winLose: true});
+		}
+		
         
 	},
 	update: function() {
